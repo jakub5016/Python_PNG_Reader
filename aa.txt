@@ -1,0 +1,6 @@
+Width: 177
+Height: 200
+Bit Depth: 80
+Compression Method: 30
+Filter Method: 30
+Interlace Method: 0
