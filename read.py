@@ -30,7 +30,21 @@ class PictueList(list):
         print(f"Compression Method: {self.compression_method}")
         print(f"Filter Method: {self.filter_method}")
         print(f"Interlace Method: {self.interlace_method}")
+    
+    def read_palette(self):
+        if self.color_type != 3:
+            print("This picture doesn't contain color palette")
+            return(-1)
 
+        palette_index = 0
+        for index, i in enumerate(self):
+            if i[1] == "PLTE":
+                palette_index = index
+
+        palette_date = delete_spaces_from_hex(self[palette_index][2]) 
+        self.palette = []
+        for i in range(0, len(palette_date), 3):
+            self.palette.append([palette_date[i], palette_date[i+1], palette_date[i+2]])
 
 def add_spaces_to_hex(hex):
     hex_with_spaces =""
@@ -90,6 +104,8 @@ if __name__ == "__main__":
             picture_arr.append(subclass_arr)
             picture_arr._get_info_form_IHDR()
             picture_arr.print_IDHR_INFO()
+            picture_arr.read_palette()
+            print(picture_arr.palette)
             exit(0)
         
         elif (chunk_type == "IEND"):
