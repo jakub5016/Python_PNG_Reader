@@ -1,4 +1,6 @@
 import sys
+from pictureList import PictueList
+from hexFunctions import delete_spaces_from_hex, add_spaces_to_hex
 
 PNG_SIGNATURE= "89 50 4E 47 0D 0A 1A 0A"
 PNG_SIGNATURE_NO_SPACE = "89504E470D0A1A0A"
@@ -7,59 +9,7 @@ CHUNK_TYPE_SIZE = 4*2
 CRC_SIZE = LENGTH_SIZE
 # Byte = 2x hex 
 
-class PictueList(list):
-    def print_chunk_types(self):    
-        for i in self:
-            print(i[1])
 
-    def _get_info_form_IHDR(self):
-        IHDR_data = delete_spaces_from_hex(self[0][2])
-        self.width = int(IHDR_data[0:8], 16)
-        self.height = int(IHDR_data[8:16], 16)
-        self.bit_depth = int(IHDR_data[16:18], 16)
-        self.color_type = int(IHDR_data[18:20], 16)
-        self.compression_method = int(IHDR_data[20:22], 16)
-        self.filter_method = int(IHDR_data[22:24], 16)
-        self.interlace_method = int(IHDR_data[24:26], 16)
-
-    def print_IDHR_INFO(self):
-        print(f"Width: {self.width}")
-        print(f"Height: {self.height}")
-        print(f"Bit Depth: {self.bit_depth}")
-        print(f"Color Type: {self.color_type}")
-        print(f"Compression Method: {self.compression_method}")
-        print(f"Filter Method: {self.filter_method}")
-        print(f"Interlace Method: {self.interlace_method}")
-    
-    def read_palette(self):
-        if self.color_type != 3:
-            print("This picture doesn't contain color palette")
-            return(-1)
-
-        palette_index = 0
-        for index, i in enumerate(self):
-            if i[1] == "PLTE":
-                palette_index = index
-
-        palette_date = delete_spaces_from_hex(self[palette_index][2]) 
-        self.palette = []
-        for i in range(0, len(palette_date), 3):
-            self.palette.append([palette_date[i], palette_date[i+1], palette_date[i+2]])
-
-def add_spaces_to_hex(hex):
-    hex_with_spaces =""
-    for index, i in enumerate(hex): 
-        if (index %2 == 0) and (index != 0):
-            hex_with_spaces+= " "
-        hex_with_spaces += i
-    return hex_with_spaces
-
-def delete_spaces_from_hex(hex):
-    hex_no_space = ""
-    for i in hex:
-       if i != " ":
-          hex_no_space += i
-    return hex_no_space
 
 if __name__ == "__main__":
    if len(sys.argv) != 2 :
