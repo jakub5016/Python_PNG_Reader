@@ -16,13 +16,7 @@ cipher = Fernet(key)
 encrypted_pixels = cipher.encrypt(bytes(pixels))
 
 # Zapisz zaszyfrowaną zawartość do nowego pliku PNG
-# encrypted_image_path = 'zaszyfrowany_obraz.png'
-# with open(encrypted_image_path, 'wb') as f:
-#     writer = png.Writer(width=width, height=height, **metadata)
-#     writer.write_array(f, encrypted_pixels)
-
-# Odczytaj i zdekoduj zaszyfrowaną zawartość
-with open(encrypted_image_path, 'rb') as f:
-    reader = png.Reader(file=f)
-    width, height, encrypted_pixels, metadata = reader.read_flat()
-
+encrypted_image_path = 'zaszyfrowany_obraz.png'
+with open(encrypted_image_path, 'wb') as f:
+    writer = png.Writer(width=width, height=height, **metadata)
+    writer.write_array(f, encrypted_pixels)
