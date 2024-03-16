@@ -1,11 +1,5 @@
 import png
-import io
-from cryptography.fernet import Fernet
-import numpy as np
-from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives import padding
-from cryptography.hazmat.primitives import hashes
 import rsa
 
 # Generowanie kluczy RSA
@@ -23,19 +17,19 @@ def RSA_decryption(RSA_content):
         result.append(rsa.decrypt(part, private_key))
     return b''.join(result)
 
-image_path = '../img.png'
+image_path = 'img.png'
 with open(image_path, 'rb') as f:
     reader = png.Reader(file=f)
     width, height, pixels, metadata = reader.read_flat()
 crypted_data = RSA_encryption(pixels)
 # Zapisz zaszyfrowaną zawartość do nowego pliku PNG
-encrypted_image_path = '../zaszyfrowany_obraz.png'
+encrypted_image_path = 'zaszyfrowany_obraz.png'
 with open(encrypted_image_path, 'wb') as f:
     writer = png.Writer(width=width, height=height, **metadata)
     writer.write_array(f, crypted_data)
 
 decrypted_data = RSA_decryption(crypted_data)
-decrypted_image_path = '../odszyfrowany_obraz.png'
+decrypted_image_path = 'odszyfrowany_obraz.png'
 with open(decrypted_image_path, 'wb') as f:
     writer = png.Writer(width=width, height=height, **metadata)
     writer.write_array(f, decrypted_data)
