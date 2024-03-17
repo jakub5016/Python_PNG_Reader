@@ -1,23 +1,15 @@
-import sys
-from src.pictureList import PictueList
-from src.hexFunctions import delete_spaces_from_hex, add_spaces_to_hex
+from ..src.pictureList import PictueList, delete_spaces_from_hex, add_spaces_to_hex
+
 
 PNG_SIGNATURE= "89 50 4E 47 0D 0A 1A 0A"
 PNG_SIGNATURE_NO_SPACE = "89504E470D0A1A0A"
 LENGTH_SIZE = 4*2
 CHUNK_TYPE_SIZE = 4*2
 CRC_SIZE = LENGTH_SIZE
-# Byte = 2x hex 
 
 
-if __name__ == "__main__":
-    if len(sys.argv) != 2 :
-        print("Too many or less arguments"+ len(sys.argv))
-        raise(AttributeError)
-   
-    png_file_path = sys.argv[1]
-
-    #### READ DATA
+def test_mout():
+    png_file_path = "./images/green-leaf.png"
     with open(png_file_path, 'rb') as binary_file:
         binary_data = binary_file.read()
 
@@ -35,13 +27,3 @@ if __name__ == "__main__":
     cursor = len(PNG_SIGNATURE_NO_SPACE)
     picture_arr=PictueList(hex_no_space=hex_no_space)
     picture_arr.mout()
-    
-    picture_arr.print_IDHR_INFO()
-    picture_arr.print_chunk_types()
-    picture_arr.delete_chunk("tRNS")
-    print("=============AFTER CHUNK DELETE==================")
-    picture_arr.print_chunk_types()
-    file = open('new_file.png', "wb")
-    picture_arr.write_to_file(file)
-    file.close()
-
