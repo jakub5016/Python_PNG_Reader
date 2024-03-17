@@ -35,27 +35,13 @@ if __name__ == "__main__":
     cursor = len(PNG_SIGNATURE_NO_SPACE)
     picture_arr=PictueList(hex_no_space=hex_no_space)
     picture_arr.mout()
+    
     picture_arr.print_IDHR_INFO()
     picture_arr.print_chunk_types()
     picture_arr.delete_chunk("tRNS")
     print("=============AFTER CHUNK DELETE==================")
     picture_arr.print_chunk_types()
     file = open('new_file.png', "wb")
-    file.write(bytes.fromhex(PNG_SIGNATURE_NO_SPACE))
-    for i in picture_arr:
-
-        file.write(i[0].to_bytes(4, "big"))
-        file.write(bytes(i[1], "utf-8"))
-        if (i[2] != None):
-            file.write(bytes.fromhex(i[2]))
-        if (i[3] != None):
-            file.write(bytes.fromhex(i[3]))
-
-        # Prompts to debug
-        # 
-        # print(i[0].to_bytes(4, "big").hex().upper()) 
-        # print((bytes(i[1], "utf-8")).hex()) 
-        # if (i[3] != None):
-        #     print(bytes.fromhex((i[3])))
+    picture_arr.write_to_file(file)
     file.close()
 

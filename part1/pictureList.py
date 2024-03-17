@@ -108,3 +108,22 @@ class PictueList(list):
             
         print("This chunk dosesn't exist")
         return 1
+    
+
+    def write_to_file(self, file):
+        file.write(bytes.fromhex(PNG_SIGNATURE_NO_SPACE))
+        for i in self:
+
+            file.write(i[0].to_bytes(4, "big"))
+            file.write(bytes(i[1], "utf-8"))
+            if (i[2] != None):
+                file.write(bytes.fromhex(i[2]))
+            if (i[3] != None):
+                file.write(bytes.fromhex(i[3]))
+
+            # Prompts to debug
+            # 
+            # print(i[0].to_bytes(4, "big").hex().upper()) 
+            # print((bytes(i[1], "utf-8")).hex()) 
+            # if (i[3] != None):
+            #     print(bytes.fromhex((i[3])))
