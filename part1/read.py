@@ -1,6 +1,6 @@
 import sys
-from part1.pictureList import PictueList
-from part1.hexFunctions import delete_spaces_from_hex
+from pictureList import PictueList
+from hexFunctions import delete_spaces_from_hex
 
 PNG_SIGNATURE= "89 50 4E 47 0D 0A 1A 0A"
 PNG_SIGNATURE_NO_SPACE = "89504E470D0A1A0A"
