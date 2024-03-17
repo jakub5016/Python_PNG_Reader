@@ -96,9 +96,15 @@ class PictueList(list):
                                  int(palette_date[i+2], 16)])
     def generate_pixels(self):
         self.pixels = []
-
-
         IDAT_data = self[self.get_chunk_index("IDAT")][2]
-        print(IDAT_data)
         for index in range(0 ,len(IDAT_data), self.width):
             self.pixels.append(IDAT_data[index:index+self.width])
+
+    def delete_chunk(self, chunk_name):
+        for index, i in enumerate(self):
+            if (i[1] == chunk_name):
+                self.pop(index)
+                return 0
+            
+        print("This chunk dosesn't exist")
+        return 1
