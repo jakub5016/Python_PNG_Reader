@@ -2,6 +2,7 @@ import base64
 
 import png
 import os
+from PIL import Image
 
 
 
@@ -14,6 +15,7 @@ class File:
         self.key = os.urandom(10000)
         self.ciphertext = None
         self.decrypted_pixels = None
+        self.compress_pixels = None
     def ECB_encrypt(self):
         #print(self.pixels)
         block_size = len(self.key)
@@ -132,3 +134,11 @@ class File:
         with open(decrypted_image_path, 'wb') as f:
             writer = png.Writer(width=self.width, height=self.height, **self.metadata)
             writer.write_array(f, self.decrypted_pixels)
+    def compress(self,width,height,quality=85):
+        with Image.open(self.filename) as img:
+            # Resize the image
+            img = img.resize((width, height), resample=Image.LANCZOS)
+            # Compress the image
+            img.save("compres.png", quality=quality, optimize=True)
+
+
