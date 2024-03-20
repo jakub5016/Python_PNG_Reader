@@ -24,4 +24,6 @@ def show_menu():
                   "\n 4 - show chunk types" +
                   "\n 5 - delete chunk" +
                   "\n 6 - show fourier transform" +
+                  "\n 7 - histogram" +
+                  "\n 8 - file description - TEXT" +
                   "\n' | lolcat")

@@ -1,18 +1,14 @@
 import sys
 import os
 
+from src.hexFunctions import delete_spaces_from_hex
 from src.show import show_image, show_menu
 from src.pictureList import PictueList
-from src.hexFunctions import delete_spaces_from_hex, add_spaces_to_hex
+from src.text import get_text
 from src.open_image import open_image
 from src.fourierTransform import fft_transform_show
 from src.createColorPlot import create_color_plot
-
-PNG_SIGNATURE= "89 50 4E 47 0D 0A 1A 0A"
-PNG_SIGNATURE_NO_SPACE = "89504E470D0A1A0A"
-LENGTH_SIZE = 4*2
-CHUNK_TYPE_SIZE = 4*2
-CRC_SIZE = LENGTH_SIZE
+from src.histogram import histogram
 # Byte = 2x hex 
 
 if __name__ == "__main__":
@@ -30,7 +26,6 @@ if __name__ == "__main__":
     status = 1
     os.system("clear")
     os.system("echo \"Processing image: "+ sys.argv[1] + "\" | lolcat")
-
     show_menu()
     while status:
         status = int(input())
@@ -61,6 +56,13 @@ if __name__ == "__main__":
             os.system("clear")
             show_menu()
         if (status == 6): fft_transform_show(sys.argv[1])
+        if (status == 7): 
+            if (picture_arr.color_type == 3) and (picture_arr.get_chunk_index("hIST") != 0):
+                histogram(picture_arr.palette, picture_arr[picture_arr.get_chunk_index("hIST")])
+            else:
+                print("This file doesn't contain histogram\n")
+        if (status == 8): get_text(picture_arr)
+
 
     os.system("clear")
 
