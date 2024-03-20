@@ -1,8 +1,7 @@
 import sys
 import os
-import io
 
-from PIL import Image
+from src.show import show_image, show_menu
 from src.pictureList import PictueList
 from src.hexFunctions import delete_spaces_from_hex, add_spaces_to_hex
 from src.open_image import open_image
@@ -15,29 +14,6 @@ LENGTH_SIZE = 4*2
 CHUNK_TYPE_SIZE = 4*2
 CRC_SIZE = LENGTH_SIZE
 # Byte = 2x hex 
-
-def show_image(bytes_data = None, file_name = None):
-    if file_name != None:
-        img = Image.open(file_name)
-        
-        # Display the image using PIL
-        img.show()
-
-    elif bytes_data !=None:
-        image = Image.open(io.BytesIO(bytes_data))
-        image.show()
-
-
-def show_menu():
-    os.system("echo '\nChoose option you want to use" +
-                  " \n 0 - exit " +
-                  "\n 1 - print IHDR info" +
-                  "\n 2 - show img "+
-                  "\n 3 - show palette plot "+
-                  "\n 4 - show chunk types" +
-                  "\n 5 - delete chunk" +
-                  "\n 6 - show fourier transform" +
-                  "\n' | lolcat")
 
 if __name__ == "__main__":
     if len(sys.argv) != 2 :
@@ -84,7 +60,7 @@ if __name__ == "__main__":
 
             os.system("clear")
             show_menu()
-        if (status == 6): fft_transform_show(file_name = sys.argv[1])
+        if (status == 6): fft_transform_show(sys.argv[1])
 
     os.system("clear")
 
