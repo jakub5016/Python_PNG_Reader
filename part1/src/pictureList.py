@@ -101,7 +101,7 @@ class PictueList(list):
             self.palette.append(color)
 
     def delete_chunk(self, chunk_name):
-        if (chunk_name == "IDAT"or chunk_name == "IHDR" or chunk_name == "IEND"):
+        if (chunk_name == "IDAT"or chunk_name == "IHDR" or chunk_name == "IEND" or (chunk_name == "PLTE" and self.color_type==3)):
             print("You must not delete this chunk! Choose another or type 0")
             return 1
 

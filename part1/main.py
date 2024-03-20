@@ -1,8 +1,11 @@
 import sys
+import os
+
+from PIL import Image
 from src.pictureList import PictueList
 from src.hexFunctions import delete_spaces_from_hex, add_spaces_to_hex
 from src.open_image import open_image
-import os
+from src.fourierTransform import fft_transform_show
 from src.createColorPlot import create_color_plot
 
 PNG_SIGNATURE= "89 50 4E 47 0D 0A 1A 0A"
@@ -12,13 +15,21 @@ CHUNK_TYPE_SIZE = 4*2
 CRC_SIZE = LENGTH_SIZE
 # Byte = 2x hex 
 
+def show_image(name):
+    img = Image.open(name)
+    
+    # Display the image using PIL
+    img.show()
+
 def show_menu():
     os.system("echo '\nChoose option you want to use" +
                   " \n 0 - exit " +
                   "\n 1 - print IHDR info" +
-                  "\n 2 - show palette plot "+
-                  "\n 3 - show chunk types" +
-                  "\n 4 - delete chunk" +
+                  "\n 2 - show img "+
+                  "\n 3 - show palette plot "+
+                  "\n 4 - show chunk types" +
+                  "\n 5 - delete chunk" +
+                  "\n 6 - show fourier transform" +
                   "\n' | lolcat")
 
 if __name__ == "__main__":
@@ -35,6 +46,8 @@ if __name__ == "__main__":
     
     status = 1
     os.system("clear")
+    os.system("echo \"Processing image: "+ sys.argv[1] + "\" | lolcat")
+
 
     show_menu()
     while status:
@@ -42,9 +55,10 @@ if __name__ == "__main__":
         os.system("clear")
         show_menu()
         if (status == 1): picture_arr.print_IDHR_INFO()
-        if (status == 2): os.system("echo " + str(picture_arr.palette) + " | lolcat"); create_color_plot(picture_arr.palette); os.system("clear"); show_menu()
-        if (status == 3): picture_arr.print_chunk_types()
-        if (status == 4): 
+        if (status == 2): show_image(sys.argv[1])
+        if (status == 3): os.system("echo " + str(picture_arr.palette) + " | lolcat"); create_color_plot(picture_arr.palette); os.system("clear"); show_menu()
+        if (status == 4): picture_arr.print_chunk_types()
+        if (status == 5): 
             os.system("echo \"This picture contains this type of chunks: \"" + " | lolcat")
             picture_arr.print_chunk_types() 
             os.system("echo \"Witch chunk you want to delete?\"" + " | lolcat")
@@ -64,6 +78,7 @@ if __name__ == "__main__":
 
             os.system("clear")
             show_menu()
+        if (status == 6): fft_transform_show(sys.argv[1])
 
-
+    os.system("clear")
 
