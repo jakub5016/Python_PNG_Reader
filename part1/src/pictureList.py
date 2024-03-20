@@ -1,4 +1,5 @@
 from .hexFunctions import delete_spaces_from_hex, add_spaces_to_hex
+import struct
 
 PNG_SIGNATURE= "89 50 4E 47 0D 0A 1A 0A"
 PNG_SIGNATURE_NO_SPACE = "89504E470D0A1A0A"
@@ -88,12 +89,19 @@ class PictueList(list):
 
         palette_index = self.get_chunk_index("PLTE")
 
-        palette_date = delete_spaces_from_hex(self[palette_index][2]) 
+        palette_data = delete_spaces_from_hex(self[palette_index][2]) 
+        palette_data_bytes = bytes.fromhex(palette_data)
+
         self.palette = []
-        for i in range(0, len(palette_date), 3):
-            self.palette.append([int(palette_date[i], 16), 
-                                 int(palette_date[i+1], 16), 
-                                 int(palette_date[i+2], 16)])
+        for i in range(0, len(palette_data_bytes), 3):
+            r = int(palette_data_bytes[i])
+            g = int(palette_data_bytes[i+1])
+            b = int(palette_data_bytes[i+2])
+
+            color = [r, g, b]
+            self.palette.append(color)
+        
+
     def generate_pixels(self):
         self.pixels = []
         IDAT_data = self[self.get_chunk_index("IDAT")][2]
