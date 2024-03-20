@@ -48,7 +48,6 @@ class PictueList(list):
     def mout(self):
         self._get_info_form_IHDR()
         self.read_palette()
-        self.generate_pixels()
 
 
     def print_chunk_types(self):    
@@ -100,15 +99,12 @@ class PictueList(list):
 
             color = [r, g, b]
             self.palette.append(color)
-        
-
-    def generate_pixels(self):
-        self.pixels = []
-        IDAT_data = self[self.get_chunk_index("IDAT")][2]
-        for index in range(0 ,len(IDAT_data), self.width):
-            self.pixels.append(IDAT_data[index:index+self.width])
 
     def delete_chunk(self, chunk_name):
+        if (chunk_name == "IDAT"or chunk_name == "IHDR" or chunk_name == "IEND"):
+            print("You must not delete this chunk! Choose another or type 0")
+            return 1
+
         for index, i in enumerate(self):
             if (i[1] == chunk_name):
                 self.pop(index)

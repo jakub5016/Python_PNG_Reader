@@ -12,6 +12,14 @@ CHUNK_TYPE_SIZE = 4*2
 CRC_SIZE = LENGTH_SIZE
 # Byte = 2x hex 
 
+def show_menu():
+    os.system("echo '\nChoose option you want to use" +
+                  " \n 0 - exit " +
+                  "\n 1 - print IHDR info" +
+                  "\n 2 - show palette plot "+
+                  "\n 3 - show chunk types" +
+                  "\n 4 - delete chunk" +
+                  "\n' | lolcat")
 
 if __name__ == "__main__":
     if len(sys.argv) != 2 :
@@ -26,15 +34,36 @@ if __name__ == "__main__":
     picture_arr.mout()
     
     status = 1
+    os.system("clear")
 
+    show_menu()
     while status:
-        os.system("echo '\nChoose option you want to use" +
-                  " \n 0 - exit " +
-                  "\n 1 - print IHDR info" +
-                  "\n 2 - show palette plot "+
-                  "\n' | lolcat")
         status = int(input())
-        print("\n")
+        os.system("clear")
+        show_menu()
         if (status == 1): picture_arr.print_IDHR_INFO()
-        if (status == 2): os.system("echo " + str(picture_arr.palette) + " | lolcat"); create_color_plot(picture_arr.palette)
+        if (status == 2): os.system("echo " + str(picture_arr.palette) + " | lolcat"); create_color_plot(picture_arr.palette); os.system("clear"); show_menu()
+        if (status == 3): picture_arr.print_chunk_types()
+        if (status == 4): 
+            os.system("echo \"This picture contains this type of chunks: \"" + " | lolcat")
+            picture_arr.print_chunk_types() 
+            os.system("echo \"Witch chunk you want to delete?\"" + " | lolcat")
+            chunk_name = input(); 
+            delete_status = 1
+            while delete_status:
+                delete_status = picture_arr.delete_chunk(chunk_name)
+                if delete_status == 0:
+                    break
+                chunk_name = input(); 
+                try:
+                    int(chunk_name)
+                    if int(chunk_name) == 0:
+                        break
+                except:
+                    pass
+
+            os.system("clear")
+            show_menu()
+
+
 
