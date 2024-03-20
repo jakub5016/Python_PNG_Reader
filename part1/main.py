@@ -1,5 +1,6 @@
 import sys
 import os
+import io
 
 from PIL import Image
 from src.pictureList import PictueList
@@ -15,11 +16,17 @@ CHUNK_TYPE_SIZE = 4*2
 CRC_SIZE = LENGTH_SIZE
 # Byte = 2x hex 
 
-def show_image(name):
-    img = Image.open(name)
-    
-    # Display the image using PIL
-    img.show()
+def show_image(bytes_data = None, file_name = None):
+    if file_name != None:
+        img = Image.open(file_name)
+        
+        # Display the image using PIL
+        img.show()
+
+    elif bytes_data !=None:
+        image = Image.open(io.BytesIO(bytes_data))
+        image.show()
+
 
 def show_menu():
     os.system("echo '\nChoose option you want to use" +
@@ -48,14 +55,13 @@ if __name__ == "__main__":
     os.system("clear")
     os.system("echo \"Processing image: "+ sys.argv[1] + "\" | lolcat")
 
-
     show_menu()
     while status:
         status = int(input())
         os.system("clear")
         show_menu()
         if (status == 1): picture_arr.print_IDHR_INFO()
-        if (status == 2): show_image(sys.argv[1])
+        if (status == 2): show_image(bytes_data=picture_arr.to_byte())
         if (status == 3): os.system("echo " + str(picture_arr.palette) + " | lolcat"); create_color_plot(picture_arr.palette); os.system("clear"); show_menu()
         if (status == 4): picture_arr.print_chunk_types()
         if (status == 5): 
@@ -78,7 +84,7 @@ if __name__ == "__main__":
 
             os.system("clear")
             show_menu()
-        if (status == 6): fft_transform_show(sys.argv[1])
+        if (status == 6): fft_transform_show(file_name = sys.argv[1])
 
     os.system("clear")
 

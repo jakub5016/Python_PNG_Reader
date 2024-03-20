@@ -131,3 +131,18 @@ class PictueList(list):
             # print((bytes(i[1], "utf-8")).hex()) 
             # if (i[3] != None):
             #     print(bytes.fromhex((i[3])))
+                
+    def to_byte(self):
+        byte_list = []
+        byte_list.append(bytes.fromhex(PNG_SIGNATURE_NO_SPACE))
+        for i in self:
+            byte_list.append(i[0].to_bytes(4, "big"))
+            byte_list.append(bytes(i[1], "utf-8"))
+            if (i[2] != None):
+                byte_list.append(bytes.fromhex(i[2]))
+            if (i[3] != None):
+                byte_list.append(bytes.fromhex(i[3]))
+
+        byte_data = b"".join(byte_list)
+
+        return byte_data
