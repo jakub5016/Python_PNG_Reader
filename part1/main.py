@@ -63,7 +63,7 @@ if __name__ == "__main__":
                 print("This file doesn't contain histogram\n")
         if (status == 8): get_text(picture_arr)
         if (status == 9): picture_arr.anonymization(); 
-        # if (status == 10): picture_arr.write_to_file(sys.argv[1][:-3] + "_copy.png")
+        if (status == 10): file_to_write = open(sys.argv[1][:-4] + "_copy.png", "wb") ; picture_arr.write_to_file(file_to_write)
 
 
     os.system("clear")
