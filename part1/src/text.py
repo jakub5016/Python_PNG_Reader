@@ -1,5 +1,5 @@
 from .hexFunctions import delete_spaces_from_hex
-
+import zlib
 
 class iTExItem:
     keyword = ""
@@ -29,8 +29,9 @@ KEYWORDS = ["Title",
 
 def get_text(picture_arr):
     key_value = []
-    for index, item in enumerate(picture_arr):
-        if item[1] == "iTXt":
+    
+    for index, arr_item in enumerate(picture_arr):
+        if arr_item[1] == "iTXt":
             hex_values = delete_spaces_from_hex(picture_arr[index][2])
             result_string = ''.join([chr(int(hex_values[i:i+2], 16)) for i in range(0, len(hex_values), 2)])
             for key in KEYWORDS:
@@ -55,8 +56,37 @@ def get_text(picture_arr):
                     
                     key_value.append(item)
         
+        if arr_item[1] == "tEXt":
+            hex_values = delete_spaces_from_hex(picture_arr[index][2])
+            result_string = ''.join([chr(int(hex_values[i:i+2], 16)) for i in range(0, len(hex_values), 2)])
+            for key in KEYWORDS:
+                if (result_string[0:len(key)] == key):
+                    item = iTExItem()
+                    item.keyword = key
+                    if result_string[len(key)] != "\x00": break
+                    item.text= result_string[len(key)+1:]
+                    key_value.append(item)
+
+        if arr_item[1] == "zTXt":
+            hex_values = delete_spaces_from_hex(picture_arr[index][2])
+            result_string = ''.join([chr(int(hex_values[i:i+2], 16)) for i in range(0, len(hex_values), 2)])
+            for key in KEYWORDS:
+                if (result_string[0:len(key)] == key):
+                    item = iTExItem()
+                    item.keyword = key
+                    if result_string[len(key)] != "\x00": break
+                    item.compression_method = result_string[len(key)+1]
+                    b = bytearray.fromhex(hex_values[len(key)*2+4:])
+                    z = zlib.decompress(b)
+                    item.text= z.decode('utf-8')
+                    key_value.append(item)
+
+
         result_string = ''
-
-
-    for i in key_value:
-        print(i)
+        
+    print("Text info")
+    if len(key_value) == 0:
+        print("None")
+    else:
+        for i in key_value:
+            print(i)
