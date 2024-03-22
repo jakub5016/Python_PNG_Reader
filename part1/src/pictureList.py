@@ -100,9 +100,10 @@ class PictueList(list):
             color = [r, g, b]
             self.palette.append(color)
 
-    def delete_chunk(self, chunk_name):
+    def delete_chunk(self, chunk_name, verbose=True):
         if (chunk_name == "IDAT"or chunk_name == "IHDR" or chunk_name == "IEND" or (chunk_name == "PLTE" and self.color_type==3)):
-            print("You must not delete this chunk! Choose another or type 0")
+            if verbose == True:
+                print("You must not delete this chunk! Choose another or type 0")
             return 1
 
         for index, i in enumerate(self):
@@ -110,7 +111,8 @@ class PictueList(list):
                 self.pop(index)
                 return 0
             
-        print("This chunk dosesn't exist")
+        if verbose == True:    
+            print("This chunk dosesn't exist")
         return 1
     
 
@@ -146,3 +148,7 @@ class PictueList(list):
         byte_data = b"".join(byte_list)
 
         return byte_data
+
+    def anonymization(self):
+        for i in self:
+            self.delete_chunk(i[1], verbose=False)

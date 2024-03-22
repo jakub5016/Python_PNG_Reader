@@ -26,4 +26,6 @@ def show_menu():
                   "\n 6 - show fourier transform" +
                   "\n 7 - histogram" +
                   "\n 8 - file description - TEXT" +
+                  "\n 9 - anonymization" +
+                  "\n 10 - write to file" +
                   "\n' | lolcat")
