@@ -150,5 +150,8 @@ class PictueList(list):
         return byte_data
 
     def anonymization(self):
-        for i in self:
-            self.delete_chunk(i[1], verbose=False)
+        # print(self)
+        i = 0
+        while i < len(self):
+            if self.delete_chunk(self[i][1], verbose=False):
+                i=i+1
