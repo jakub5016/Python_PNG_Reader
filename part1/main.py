@@ -8,7 +8,7 @@ from src.text import get_text
 from src.open_image import open_image
 from src.fourierTransform import fft_transform_show
 from src.createColorPlot import create_color_plot
-from src.histogram import histogram
+from src.histogramv2 import histogram
 # Byte = 2x hex 
 
 if __name__ == "__main__":

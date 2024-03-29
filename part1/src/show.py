@@ -4,16 +4,18 @@ import io
 from PIL import Image
 
 def show_image(bytes_data = None, file_name = None):
-    if file_name != None:
+    if bytes_data !=None:
+        try:
+            image = Image.open(io.BytesIO(bytes_data))
+            image.show()
+        except:
+            print("Cannot show this img")
+    
+    elif file_name != None:
         img = Image.open(file_name)
         
         # Display the image using PIL
         img.show()
-
-    elif bytes_data !=None:
-        image = Image.open(io.BytesIO(bytes_data))
-        image.show()
-
 
 def show_menu():
     os.system("echo '\nChoose option you want to use" +
