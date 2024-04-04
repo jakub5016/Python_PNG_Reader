@@ -30,4 +30,5 @@ def show_menu():
                   "\n 8 - file description - TEXT" +
                   "\n 9 - anonymization" +
                   "\n 10 - write to file" +
+                  "\n 11 - chromaticities" +
                   "\n' | lolcat")
