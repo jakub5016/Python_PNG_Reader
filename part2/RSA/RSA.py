@@ -1,6 +1,7 @@
 import png
 from cryptography.hazmat.primitives.asymmetric import rsa
 import rsa
+from PIL import Image
 
 # Generowanie kluczy RSA
 (public_key,private_key) = rsa.newkeys(2048)
@@ -33,4 +34,7 @@ decrypted_image_path = 'odszyfrowany_obraz.png'
 with open(decrypted_image_path, 'wb') as f:
     writer = png.Writer(width=width, height=height, **metadata)
     writer.write_array(f, decrypted_data)
-
+imZa = Image.open("zaszyfrowany_obraz.png")
+imZa.show()
+imZde = Image.open("odszyfrowany_obraz.png")
+imZde.show()
