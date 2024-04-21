@@ -33,7 +33,7 @@ class File:
             # XOR the block with the key
             encrypted_block = []
             for b, k in zip(block, self.key):
-                encrypted_block.append(b ^ k)
+                encrypted_block.append(b ^ k) # ^ Xor operation
             encrypted_blocks.append(encrypted_block)
 
         # Concatenate encrypted blocks
@@ -130,7 +130,7 @@ class File:
             writer = png.Writer(width=self.width, height=self.height, **self.metadata)
             writer.write_array(f, self.ciphertext)
     def zapisz_zdeszyfrowany_obraz(self):
-        decrypted_image_path = 'zdeszyfrowany_obraz.png'
+        decrypted_image_path = 'odszyfrowany_obraz.png'
         with open(decrypted_image_path, 'wb') as f:
             writer = png.Writer(width=self.width, height=self.height, **self.metadata)
             writer.write_array(f, self.decrypted_pixels)
