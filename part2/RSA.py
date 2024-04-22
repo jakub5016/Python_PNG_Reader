@@ -1,21 +1,20 @@
 import random
 import png
+import math
+import time
 
+
+ENCRYPTED_PIXELS= []
 
 # A more robust prime-checking function
 def is_prime(n):
     if n <= 1:
         return False
-    if n <= 3:
-        return True
-    if n % 2 == 0 or n % 3 == 0:
-        return False
-    i = 5
-    while i * i <= n:
-        if n % i == 0 or n % (i + 2) == 0:
+    for i in range(2, int(math.sqrt(n)) + 1):
+        if n % i == 0:
             return False
-        i += 6
     return True
+
 
 
 # Generate prime numbers with proper bit size
@@ -46,21 +45,41 @@ def mod_inverse(e, phi):
         raise Exception("e is not invertible")
     if t < 0:
         t += phi
+
+    print((e * t) %phi) #Check if mod_inverse works
+
     return t
 
 
 # RSA keypair generation with larger bit size
 def generate_keypair(bits):
-    p = generate_prime(bits // 2)
-    q = generate_prime(bits // 2)
-    n = p * q
-    phi = (p - 1) * (q - 1)
+    phi = 0
+    while phi < 4:
+        generate_time = time.time()
+        p = generate_prime(bits // 2)
+        print(f"Got P value = {p} in {time.time()-generate_time} s")
+
+        generate_time = time.time()
+        q = generate_prime(bits // 2)
+        print(f"Got Q value = {q} in {time.time()-generate_time} s")
+
+        n = p * q
+        phi = math.lcm(p-1, q-1)
+
+    print(f"Got phi value = {phi}")
+
     while True:
         e = random.randrange(2, phi)
         if gcd(e, phi) == 1:
             break
+    
+    print(f"Got e = {e}")
     d = mod_inverse(e, phi)
+
+    print(f"Got d = {d}")
     return ((e, n), (d, n))
+    
+    # return ((17, 3233), (413, 3233)) #Fixed values for debug
 
 
 # Encryption and decryption functions
@@ -94,27 +113,41 @@ def write_png(filename, width, height, metadata, data):
 # Encrypting file with proper conversion
 def encrypt_file(filename, public_key):
     width, height, pixels, metadata = read_png(filename)
-    encrypted_pixels = [encrypt_chunk(p, public_key) % 256 for p in pixels]
-    write_png("encrypted.png", width, height, metadata, encrypted_pixels)
+    global ENCRYPTED_PIXELS
+    ENCRYPTED_PIXELS = [encrypt_chunk(p, public_key) for p in pixels]
 
 
 # Decrypting file with correct conversion
 def decrypt_file(filename, private_key):
-    width, height, pixels, metadata = read_png(filename)
-    decrypted_pixels = [decrypt_chunk(p, private_key) % 256 for p in pixels]
+    width, height,pixels, metadata = read_png(filename)
+    decrypted_pixels = []
+    for p in ENCRYPTED_PIXELS:
+        decrypted = decrypt_chunk(p, private_key)
+        # if not (0 <= decrypted <= 255):
+        #     print(decrypted)
+        decrypted_pixels.append(decrypted)
+
     write_png("decrypted.png", width, height, metadata, decrypted_pixels)
 
 
 # Example usage with increased key size
 if __name__ == '__main__':
-    key_size = 1024  # This is a more reasonable key size for RSA
+    key_size = 12  # This is a more reasonable key size for RSA
 
     # Generate key pair
+    print("Getting key")
     public_key, private_key = generate_keypair(key_size)
-
+    
+    
+    # x = encrypt_chunk(65,public_key)
+    # print(f"Encrypted 65 got decrypted: {decrypt_chunk(x, private_key)}")
+    generate_time = time.time()
     # Encrypt the original PNG file
     original_file = "img.png"
     encrypt_file(original_file, public_key)
+    print(f"Encrypted in in {time.time()-generate_time} s")
 
+    generate_time = time.time()
     # Decrypt the encrypted PNG file
     decrypt_file("encrypted.png", private_key)
+    print(f"Decrypted in in {time.time()-generate_time} s")
