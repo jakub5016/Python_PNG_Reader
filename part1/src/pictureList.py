@@ -1,4 +1,5 @@
-from part1.hexFunctions import delete_spaces_from_hex, add_spaces_to_hex
+from .hexFunctions import delete_spaces_from_hex, add_spaces_to_hex
+import struct
 
 PNG_SIGNATURE= "89 50 4E 47 0D 0A 1A 0A"
 PNG_SIGNATURE_NO_SPACE = "89504E470D0A1A0A"
@@ -47,7 +48,6 @@ class PictueList(list):
     def mout(self):
         self._get_info_form_IHDR()
         self.read_palette()
-        self.generate_pixels()
 
 
     def print_chunk_types(self):    
@@ -88,17 +88,70 @@ class PictueList(list):
 
         palette_index = self.get_chunk_index("PLTE")
 
-        palette_date = delete_spaces_from_hex(self[palette_index][2]) 
+        palette_data = delete_spaces_from_hex(self[palette_index][2]) 
+        palette_data_bytes = bytes.fromhex(palette_data)
+
         self.palette = []
-        for i in range(0, len(palette_date), 3):
-            self.palette.append([int(palette_date[i], 16), 
-                                 int(palette_date[i+1], 16), 
-                                 int(palette_date[i+2], 16)])
-    def generate_pixels(self):
-        self.pixels = []
+        for i in range(0, len(palette_data_bytes), 3):
+            r = int(palette_data_bytes[i])
+            g = int(palette_data_bytes[i+1])
+            b = int(palette_data_bytes[i+2])
 
+            color = [r, g, b]
+            self.palette.append(color)
 
-        IDAT_data = self[self.get_chunk_index("IDAT")][2]
-        print(IDAT_data)
-        for index in range(0 ,len(IDAT_data), self.width):
-            self.pixels.append(IDAT_data[index:index+self.width])
+    def delete_chunk(self, chunk_name, verbose=True):
+        if (chunk_name == "IDAT"or chunk_name == "IHDR" or chunk_name == "IEND" or (chunk_name == "PLTE" and self.color_type==3)):
+            if verbose == True:
+                print("You must not delete this chunk! Choose another or type 0")
+            return 1
+
+        for index, i in enumerate(self):
+            if (i[1] == chunk_name):
+                self.pop(index)
+                return 0
+            
+        if verbose == True:    
+            print("This chunk dosesn't exist")
+        return 1
+    
+
+    def write_to_file(self, file):
+        file.write(bytes.fromhex(PNG_SIGNATURE_NO_SPACE))
+        for i in self:
+
+            file.write(i[0].to_bytes(4, "big"))
+            file.write(bytes(i[1], "utf-8"))
+            if (i[2] != None):
+                file.write(bytes.fromhex(i[2]))
+            if (i[3] != None):
+                file.write(bytes.fromhex(i[3]))
+
+            # Prompts to debug
+            # 
+            # print(i[0].to_bytes(4, "big").hex().upper()) 
+            # print((bytes(i[1], "utf-8")).hex()) 
+            # if (i[3] != None):
+            #     print(bytes.fromhex((i[3])))
+                
+    def to_byte(self):
+        byte_list = []
+        byte_list.append(bytes.fromhex(PNG_SIGNATURE_NO_SPACE))
+        for i in self:
+            byte_list.append(i[0].to_bytes(4, "big"))
+            byte_list.append(bytes(i[1], "utf-8"))
+            if (i[2] != None):
+                byte_list.append(bytes.fromhex(i[2]))
+            if (i[3] != None):
+                byte_list.append(bytes.fromhex(i[3]))
+
+        byte_data = b"".join(byte_list)
+
+        return byte_data
+
+    def anonymization(self):
+        # print(self)
+        i = 0
+        while i < len(self):
+            if self.delete_chunk(self[i][1], verbose=False):
+                i=i+1
