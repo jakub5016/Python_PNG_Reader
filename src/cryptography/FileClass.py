@@ -6,11 +6,10 @@ from PIL import Image
 from PIL import Image
 
 
-
 class File:
     def __init__(self, filename):
         self.filename = filename
-        with open(filename, 'rb') as f:
+        with open(filename, "rb") as f:
             reader = png.Reader(file=f)
             self.width, self.height, self.pixels, self.metadata = reader.read_flat()
         self.key = os.urandom(10000)
@@ -19,8 +18,9 @@ class File:
         self.decrypted_pixels = None
         self.compress_pixels = None
         self.compress_pixels = None
+
     def ECB_encrypt(self):
-        #print(self.pixels)
+        # print(self.pixels)
         block_size = len(self.key)
         num_blocks = len(self.pixels) // block_size
         if len(self.pixels) % block_size != 0:
@@ -36,14 +36,17 @@ class File:
             # XOR the block with the key
             encrypted_block = []
             for b, k in zip(block, self.key):
-                encrypted_block.append(b ^ k) # ^ Xor operation
+                encrypted_block.append(b ^ k)  # ^ Xor operation
             encrypted_blocks.append(encrypted_block)
 
         # Concatenate encrypted blocks
-        #print(encrypted_blocks)
-        self.ciphertext = ','.join([','.join(map(str, sublist)) for sublist in encrypted_blocks])
+        # print(encrypted_blocks)
+        self.ciphertext = ",".join(
+            [",".join(map(str, sublist)) for sublist in encrypted_blocks]
+        )
         self.ciphertext = self.ciphertext.split(",")
         self.ciphertext = list(map(int, self.ciphertext))
+
     def ECB_decrypt(self):
         block_size = len(self.key)
         num_blocks = len(self.ciphertext) // block_size
@@ -64,7 +67,7 @@ class File:
         # Concatenate decrypted blocks
         decrypted_pixels = [item for sublist in decrypted_blocks for item in sublist]
         self.decrypted_pixels = decrypted_pixels
-        #print(self.decrypted_pixels)
+        # print(self.decrypted_pixels)
 
     def CBC_encrypt(self):
         block_size = len(self.key)
@@ -94,7 +97,9 @@ class File:
             previous_block = encrypted_block
 
         # Concatenate encrypted blocks
-        self.ciphertext = ','.join([','.join(map(str, sublist)) for sublist in encrypted_blocks])
+        self.ciphertext = ",".join(
+            [",".join(map(str, sublist)) for sublist in encrypted_blocks]
+        )
         self.ciphertext = self.ciphertext.split(",")
         self.ciphertext = list(map(int, self.ciphertext))
 
@@ -117,7 +122,9 @@ class File:
                 decrypted_block.append(b ^ k)
 
             # XOR the decrypted block with the previous ciphertext block
-            decrypted_block_xor = [b1 ^ b2 for b1, b2 in zip(decrypted_block, previous_block)]
+            decrypted_block_xor = [
+                b1 ^ b2 for b1, b2 in zip(decrypted_block, previous_block)
+            ]
 
             decrypted_blocks.append(decrypted_block_xor)
 
@@ -127,6 +134,7 @@ class File:
         # Concatenate decrypted blocks
         decrypted_pixels = [item for sublist in decrypted_blocks for item in sublist]
         self.decrypted_pixels = decrypted_pixels
+
     def CBC_encrypt(self):
         block_size = len(self.key)
         num_blocks = len(self.pixels) // block_size
@@ -155,7 +163,9 @@ class File:
             previous_block = encrypted_block
 
         # Concatenate encrypted blocks
-        self.ciphertext = ','.join([','.join(map(str, sublist)) for sublist in encrypted_blocks])
+        self.ciphertext = ",".join(
+            [",".join(map(str, sublist)) for sublist in encrypted_blocks]
+        )
         self.ciphertext = self.ciphertext.split(",")
         self.ciphertext = list(map(int, self.ciphertext))
 
@@ -178,7 +188,9 @@ class File:
                 decrypted_block.append(b ^ k)
 
             # XOR the decrypted block with the previous ciphertext block
-            decrypted_block_xor = [b1 ^ b2 for b1, b2 in zip(decrypted_block, previous_block)]
+            decrypted_block_xor = [
+                b1 ^ b2 for b1, b2 in zip(decrypted_block, previous_block)
+            ]
 
             decrypted_blocks.append(decrypted_block_xor)
 
@@ -188,17 +200,20 @@ class File:
         # Concatenate decrypted blocks
         decrypted_pixels = [item for sublist in decrypted_blocks for item in sublist]
         self.decrypted_pixels = decrypted_pixels
+
     def zapisz_zaszyfrowany_obraz(self):
-        encrypted_image_path = 'zaszyfrowany_obraz.png'
-        with open(encrypted_image_path, 'wb') as f:
+        encrypted_image_path = "zaszyfrowany_obraz.png"
+        with open(encrypted_image_path, "wb") as f:
             writer = png.Writer(width=self.width, height=self.height, **self.metadata)
             writer.write_array(f, self.ciphertext)
+
     def zapisz_zdeszyfrowany_obraz(self):
-        decrypted_image_path = 'odszyfrowany_obraz.png'
-        with open(decrypted_image_path, 'wb') as f:
+        decrypted_image_path = "odszyfrowany_obraz.png"
+        with open(decrypted_image_path, "wb") as f:
             writer = png.Writer(width=self.width, height=self.height, **self.metadata)
             writer.write_array(f, self.decrypted_pixels)
-    def compress(self,width,height,quality=85):
+
+    def compress(self, width, height, quality=85):
         with Image.open(self.filename) as img:
             # Resize the image
             img = img.resize((width, height), resample=Image.LANCZOS)

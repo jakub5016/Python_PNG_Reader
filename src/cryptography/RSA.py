@@ -4,7 +4,8 @@ import math
 import time
 
 
-ENCRYPTED_PIXELS= []
+ENCRYPTED_PIXELS = []
+
 
 # A more robust prime-checking function
 def is_prime(n):
@@ -14,7 +15,6 @@ def is_prime(n):
         if n % i == 0:
             return False
     return True
-
 
 
 # Generate prime numbers with proper bit size
@@ -46,7 +46,7 @@ def mod_inverse(e, phi):
     if t < 0:
         t += phi
 
-    print((e * t) %phi) #Check if mod_inverse works
+    print((e * t) % phi)  # Check if mod_inverse works
 
     return t
 
@@ -64,7 +64,7 @@ def generate_keypair(bits):
         print(f"Got Q value = {q} in {time.time()-generate_time} s")
 
         n = p * q
-        phi = math.lcm(p-1, q-1)
+        phi = math.lcm(p - 1, q - 1)
 
     print(f"Got phi value = {phi}")
 
@@ -72,13 +72,13 @@ def generate_keypair(bits):
         e = random.randrange(2, phi)
         if gcd(e, phi) == 1:
             break
-    
+
     print(f"Got e = {e}")
     d = mod_inverse(e, phi)
 
     print(f"Got d = {d}")
     return ((e, n), (d, n))
-    
+
     # return ((17, 3233), (413, 3233)) #Fixed values for debug
 
 
@@ -97,7 +97,7 @@ def decrypt_chunk(chunk, private_key):
 
 # Read PNG data
 def read_png(filename):
-    with open(filename, 'rb') as f:
+    with open(filename, "rb") as f:
         reader = png.Reader(file=f)
         width, height, pixels, metadata = reader.read_flat()
     return width, height, pixels, metadata
@@ -105,7 +105,7 @@ def read_png(filename):
 
 # Write PNG data
 def write_png(filename, width, height, metadata, data):
-    with open(filename, 'wb') as f:
+    with open(filename, "wb") as f:
         writer = png.Writer(width=width, height=height, **metadata)
         writer.write_array(f, data)
 
@@ -119,7 +119,7 @@ def encrypt_file(filename, public_key):
 
 # Decrypting file with correct conversion
 def decrypt_file(filename, private_key):
-    width, height,pixels, metadata = read_png(filename)
+    width, height, pixels, metadata = read_png(filename)
     decrypted_pixels = []
     for p in ENCRYPTED_PIXELS:
         decrypted = decrypt_chunk(p, private_key)
@@ -131,14 +131,13 @@ def decrypt_file(filename, private_key):
 
 
 # Example usage with increased key size
-if __name__ == '__main__':
+if __name__ == "__main__":
     key_size = 12  # This is a more reasonable key size for RSA
 
     # Generate key pair
     print("Getting key")
     public_key, private_key = generate_keypair(key_size)
-    
-    
+
     # x = encrypt_chunk(65,public_key)
     # print(f"Encrypted 65 got decrypted: {decrypt_chunk(x, private_key)}")
     generate_time = time.time()

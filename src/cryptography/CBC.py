@@ -3,7 +3,6 @@ from PIL import Image
 import FileClass
 
 
-
 file = FileClass.File("img.png")
 file.CBC_encrypt()
 file.zapisz_zaszyfrowany_obraz()
