@@ -10,7 +10,8 @@ from src.fourier_transform import fft_transform_show
 from src.create_color_plot import create_color_plot
 from src.histogram import histogram
 from src.chroma import print_chroma
-
+from src.cryptography.cbc import cbc_decrypt, cbc_encrypt
+from src.cryptography.rsa import decrypt_chunk, encrypt_chunk, generate_keypair
 # Byte = 2x hex
 
 if __name__ == "__main__":
@@ -92,5 +93,57 @@ if __name__ == "__main__":
             picture_arr.write_to_file(file_to_write)
         if status == 11:
             print_chroma(picture_arr)
+        if status == 12:
+            IDAT_index = picture_arr.get_chunk_index("IDAT")
+            data_str = (picture_arr[IDAT_index][2].split())
+            data = [int(x, 16) for x in data_str]
+
+            public_key, private_key = generate_keypair(8)
+            encrypted_chunk = encrypt_chunk(data, public_key)
+            print(picture_arr[IDAT_index][2])
+            print(f"Here is your public and public keys:\n   public key: {public_key}\n  private key: {private_key}\nKeep private key in secret in case of decrypting file!")
+
+            hex_list = [hex(num)[2:].upper() for num in encrypted_chunk]
+            for index, i in enumerate(hex_list):
+                if len(i) == 1:
+                    hex_list[index] = "0" + hex_list[index]
+
+            hex_string = ' '.join(hex_list)
+
+            picture_arr[IDAT_index][2] = hex_string
+
+            file_to_write = open(sys.argv[1][:-4] + "_rsa_encoded.png", "wb")
+            picture_arr.write_to_file(file_to_write)
+
+
+        if status == 13:
+            d = ""
+            while not d.isnumeric():
+                print("Privide private key:\n d = ")
+                d = input()
+            d = int(d)
+
+            n = ""
+            while not n.isnumeric():
+                print("Privide private key:\n n = ")
+                n = input()
+            n = int(n)
+
+            IDAT_index = picture_arr.get_chunk_index("IDAT")
+            data_str = (picture_arr[IDAT_index][2].split())
+            data = [int(x, 16) for x in data_str]
+            encrypted_chunk = decrypt_chunk(data, (d, n))
+
+            hex_list = [hex(num)[2:].upper() for num in encrypted_chunk]
+            for index, i in enumerate(hex_list):
+                if len(i) == 1:
+                    hex_list[index] = "0" + hex_list[index]
+
+            hex_string = ' '.join(hex_list)
+            picture_arr[IDAT_index][2] = hex_string
+
+            file_to_write = open(sys.argv[1][:-16] + "_rsa_decoded.png", "wb")
+            picture_arr.write_to_file(file_to_write)
+
 
     os.system("clear")

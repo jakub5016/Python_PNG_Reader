@@ -34,5 +34,7 @@ def show_menu():
         + "\n 9 - anonymization"
         + "\n 10 - write to file"
         + "\n 11 - chromaticities"
+        + "\n 12 - encrypt file in rsa and save"
+        + "\n 13 - decrypt file in rsa and save"
         + "\n' | lolcat"
     )
