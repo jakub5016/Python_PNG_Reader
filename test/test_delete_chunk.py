@@ -1,4 +1,4 @@
-from ..src.pictureList import PictueList, delete_spaces_from_hex, add_spaces_to_hex
+from ..src.picture_list import PictueList, delete_spaces_from_hex, add_spaces_to_hex
 from ..src.open_image import open_image
 
 

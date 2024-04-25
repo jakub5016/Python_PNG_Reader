@@ -1,5 +1,4 @@
 import random
-import png
 import math
 import time
 
@@ -20,9 +19,11 @@ def is_prime(n):
 # Generate prime numbers with proper bit size
 def generate_prime(bits):
     while True:
-        n = random.getrandbits(bits)
-        if is_prime(n):
-            return n
+        num = random.randint(2**(bits-1), 2**bits - 1)
+        if num % 2 == 0:  # Ensure the number is odd
+            num += 1
+        if is_prime(num):
+            return num
 
 
 # Function to calculate gcd
@@ -55,14 +56,13 @@ def generate_keypair(bits):
     phi = 0
     while phi < 4:
         generate_time = time.time()
-        p = generate_prime(bits // 2)
+        p = generate_prime(bits)
 
         generate_time = time.time()
-        q = generate_prime(bits // 2)
+        q = generate_prime(bits)
 
         n = p * q
         phi = math.lcm(p - 1, q - 1)
-
 
     while True:
         e = random.randrange(2, phi)
@@ -70,6 +70,7 @@ def generate_keypair(bits):
             break
     
     d = mod_inverse(e, phi)
+    print(f"P:{p}, q:{q}, n:{n}, phi:{phi}, e:{e}, d:{d}")
 
     return ((e, n), (d, n))
 

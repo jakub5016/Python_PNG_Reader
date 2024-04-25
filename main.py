@@ -1,7 +1,7 @@
 import sys
 import os
 
-from src.hex_functions import delete_spaces_from_hex
+from src.hex_functions import delete_spaces_from_hex, add_spaces_to_hex
 from src.show import show_image, show_menu
 from src.picture_list import PictueList
 from src.text import get_text
@@ -97,21 +97,45 @@ if __name__ == "__main__":
             IDAT_index = picture_arr.get_chunk_index("IDAT")
             data_str = (picture_arr[IDAT_index][2].split())
             data = [int(x, 16) for x in data_str]
-
+            print(data)  
             public_key, private_key = generate_keypair(8)
             encrypted_chunk = encrypt_chunk(data, public_key)
-            print(picture_arr[IDAT_index][2])
             print(f"Here is your public and public keys:\n   public key: {public_key}\n  private key: {private_key}\nKeep private key in secret in case of decrypting file!")
 
-            hex_list = [hex(num)[2:].upper() for num in encrypted_chunk]
-            for index, i in enumerate(hex_list):
-                if len(i) == 1:
-                    hex_list[index] = "0" + hex_list[index]
+            hex_list = []
+            for num in encrypted_chunk:
+                hex_num = hex(num)[2:]
+                width = (len(hex_num) + 3) // 4 * 4  # Calculate width to ensure full number output
+                hex_list.append('{:0>{width}}'.format(hex_num, width=width))
 
             hex_string = ' '.join(hex_list)
-
+            print(hex_string)
             picture_arr[IDAT_index][2] = hex_string
 
+            #Lenght of IDAT changed
+            picture_arr[IDAT_index][0] = picture_arr[IDAT_index][0] * 2
+
+            # You have to change widht and height
+            IHDR_data = picture_arr[0][2]
+
+            width_hex = delete_spaces_from_hex(IHDR_data)[0:8]
+            height_hex = delete_spaces_from_hex(IHDR_data)[8:16]
+
+            # Convert hexadecimal to decimal
+            width_dec = int(width_hex.replace(' ', ''), 16)
+            height_dec = int(height_hex.replace(' ', ''), 16)
+
+            # Double the values
+            new_width_dec = width_dec * 2
+            new_height_dec = height_dec * 2
+
+            # Convert decimal back to hexadecimal
+            new_width_hex = '{:08X}'.format(new_width_dec)
+            new_height_hex = '{:08X}'.format(new_height_dec)
+
+            # Update picture_arr[0]
+            picture_arr[0][2] = add_spaces_to_hex(new_width_hex + new_height_hex + delete_spaces_from_hex(IHDR_data)[16:])
+            
             file_to_write = open(sys.argv[1][:-4] + "_rsa_encoded.png", "wb")
             picture_arr.write_to_file(file_to_write)
 
@@ -130,17 +154,49 @@ if __name__ == "__main__":
             n = int(n)
 
             IDAT_index = picture_arr.get_chunk_index("IDAT")
-            data_str = (picture_arr[IDAT_index][2].split())
+            data_str = picture_arr[IDAT_index][2]
+            even = False
+            modified_words = ""
+            for i in data_str:
+                if i != " ":
+                    modified_words += i
+                elif even == False:
+                    even = True
+                else:
+                    even = False
+                    modified_words += i
+
+            data_str = modified_words.split()
             data = [int(x, 16) for x in data_str]
-            encrypted_chunk = decrypt_chunk(data, (d, n))
+            decrypted_chunk = decrypt_chunk(data, (d, n))
+            print(decrypted_chunk)
 
-            hex_list = [hex(num)[2:].upper() for num in encrypted_chunk]
-            for index, i in enumerate(hex_list):
-                if len(i) == 1:
-                    hex_list[index] = "0" + hex_list[index]
-
-            hex_string = ' '.join(hex_list)
+            hex_string = ' '.join(format(x, '02X') for x in decrypted_chunk)
             picture_arr[IDAT_index][2] = hex_string
+            picture_arr[IDAT_index][0] = picture_arr[IDAT_index][0]//2
+
+            # You have to change widht and height
+            IHDR_data = picture_arr[0][2]
+            print(IHDR_data)
+
+            width_hex = delete_spaces_from_hex(IHDR_data)[0:8]
+            height_hex = delete_spaces_from_hex(IHDR_data)[8:16]
+
+            # Convert hexadecimal to decimal
+            width_dec = int(width_hex.replace(' ', ''), 16)
+            height_dec = int(height_hex.replace(' ', ''), 16)
+
+            # Make val two times smaller
+            new_width_dec = width_dec // 2
+            new_height_dec = height_dec // 2
+
+            # Convert decimal back to hexadecimal
+            new_width_hex = '{:08X}'.format(int(new_width_dec))
+            new_height_hex = '{:08X}'.format(int(new_height_dec))
+
+            # Update picture_arr[0]
+            picture_arr[0][2] = add_spaces_to_hex(new_width_hex + new_height_hex + delete_spaces_from_hex(IHDR_data)[16:])
+            print(picture_arr[0][2])  
 
             file_to_write = open(sys.argv[1][:-16] + "_rsa_decoded.png", "wb")
             picture_arr.write_to_file(file_to_write)

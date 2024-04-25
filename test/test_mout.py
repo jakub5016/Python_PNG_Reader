@@ -1,4 +1,4 @@
-from ..src.pictureList import PictueList
+from ..src.picture_list import PictueList
 from ..src.open_image import open_image
 
 
