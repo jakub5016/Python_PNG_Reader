@@ -1,7 +1,0 @@
-cffi==1.16.0
-cryptography==42.0.5
-pillow==10.3.0
-pyasn1==0.6.0
-pycparser==2.22
-pypng==0.20220715.0
-rsa==4.9
