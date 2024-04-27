@@ -1,5 +1,7 @@
 import sys
 import os
+import zlib
+import struct
 
 from src.hex_functions import delete_spaces_from_hex, add_spaces_to_hex
 from src.show import show_image, show_menu
@@ -97,7 +99,10 @@ if __name__ == "__main__":
             IDAT_index = picture_arr.get_chunk_index("IDAT")
             data_str = (picture_arr[IDAT_index][2].split())
             data = [int(x, 16) for x in data_str]
-            print(data)  
+
+            chunk_type = b"\x49\x44\x41\x54"
+            chunk_data = bytes.fromhex(picture_arr[IDAT_index][2])
+
             public_key, private_key = generate_keypair(8)
             encrypted_chunk = encrypt_chunk(data, public_key)
             print(f"Here is your public and public keys:\n   public key: {public_key}\n  private key: {private_key}\nKeep private key in secret in case of decrypting file!")
@@ -109,7 +114,6 @@ if __name__ == "__main__":
                 hex_list.append('{:0>{width}}'.format(hex_num, width=width))
 
             hex_string = ' '.join(hex_list)
-            print(hex_string)
             picture_arr[IDAT_index][2] = hex_string
 
             #Lenght of IDAT changed
@@ -136,6 +140,13 @@ if __name__ == "__main__":
             # Update picture_arr[0]
             picture_arr[0][2] = add_spaces_to_hex(new_width_hex + new_height_hex + delete_spaces_from_hex(IHDR_data)[16:])
             
+            # Update CRC
+            chunk_type = b"\x49\x44\x41\x54"
+            chunk_data = bytes.fromhex(hex_string)
+            picture_arr[IDAT_index][3] = hex(zlib.crc32(chunk_type + chunk_data))[2:].upper()
+            print(hex(zlib.crc32(chunk_type + chunk_data)))
+
+            # Write to file
             file_to_write = open(sys.argv[1][:-4] + "_rsa_encoded.png", "wb")
             picture_arr.write_to_file(file_to_write)
 
@@ -169,7 +180,6 @@ if __name__ == "__main__":
             data_str = modified_words.split()
             data = [int(x, 16) for x in data_str]
             decrypted_chunk = decrypt_chunk(data, (d, n))
-            print(decrypted_chunk)
 
             hex_string = ' '.join(format(x, '02X') for x in decrypted_chunk)
             picture_arr[IDAT_index][2] = hex_string
@@ -177,7 +187,6 @@ if __name__ == "__main__":
 
             # You have to change widht and height
             IHDR_data = picture_arr[0][2]
-            print(IHDR_data)
 
             width_hex = delete_spaces_from_hex(IHDR_data)[0:8]
             height_hex = delete_spaces_from_hex(IHDR_data)[8:16]
@@ -196,8 +205,13 @@ if __name__ == "__main__":
 
             # Update picture_arr[0]
             picture_arr[0][2] = add_spaces_to_hex(new_width_hex + new_height_hex + delete_spaces_from_hex(IHDR_data)[16:])
-            print(picture_arr[0][2])  
 
+            # Update CRC
+            chunk_type = b"\x49\x44\x41\x54"
+            chunk_data = bytes.fromhex(hex_string)
+            picture_arr[IDAT_index][3] = hex(zlib.crc32(chunk_type + chunk_data))[2:].upper()
+            # print(hex(zlib.crc32(chunk_type + chunk_data)))
+            
             file_to_write = open(sys.argv[1][:-16] + "_rsa_decoded.png", "wb")
             picture_arr.write_to_file(file_to_write)
 

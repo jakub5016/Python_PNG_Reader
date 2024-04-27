@@ -22,3 +22,4 @@ src/cryptography/rsa.py
 src/cryptography/rsa_manual.py
 test/test_delete_chunk.py
 test/test_mout.py
+test/test_rsa.py
