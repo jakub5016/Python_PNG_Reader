@@ -118,9 +118,10 @@ def decrypt_idat(IDAT, IHDR, private_key):
 
     # Calculate 
     decrypted_chunk = decrypt_chunk(data, private_key)
-    
+    hex_string = ' '.join(format(x, '02X') for x in decrypted_chunk)
+
     # Create hex to write to chunk 
-    IDAT[2] = refactor_32_bit(create_hex_chunk_from_int(decrypted_chunk))
+    IDAT[2] = hex_string
     
     # Change length of chunk
     IDAT[0] = int(IDAT[0]/2) 
