@@ -3,6 +3,7 @@ import os
 import zlib
 import struct
 
+from src.cryptography.png.idat import encrypt_idat, decrypt_idat
 from src.hex_functions import delete_spaces_from_hex, add_spaces_to_hex
 from src.show import show_image, show_menu
 from src.picture_list import PictueList
@@ -97,56 +98,17 @@ if __name__ == "__main__":
             print_chroma(picture_arr)
         if status == 12:
             IDAT_index = picture_arr.get_chunk_index("IDAT")
-            data_str = (picture_arr[IDAT_index][2].split())
-            data = [int(x, 16) for x in data_str]
-
-            chunk_type = b"\x49\x44\x41\x54"
-            chunk_data = bytes.fromhex(picture_arr[IDAT_index][2])
-
-            public_key, private_key = generate_keypair(8)
-            encrypted_chunk = encrypt_chunk(data, public_key)
-            print(f"Here is your public and public keys:\n   public key: {public_key}\n  private key: {private_key}\nKeep private key in secret in case of decrypting file!")
-
-            hex_list = []
-            for num in encrypted_chunk:
-                hex_num = hex(num)[2:]
-                width = (len(hex_num) + 3) // 4 * 4  # Calculate width to ensure full number output
-                hex_list.append('{:0>{width}}'.format(hex_num, width=width))
-
-            hex_string = ' '.join(hex_list)
-            picture_arr[IDAT_index][2] = hex_string
-
-            #Lenght of IDAT changed
-            picture_arr[IDAT_index][0] = picture_arr[IDAT_index][0] * 2
-
-            # You have to change widht and height
-            IHDR_data = picture_arr[0][2]
-
-            width_hex = delete_spaces_from_hex(IHDR_data)[0:8]
-            height_hex = delete_spaces_from_hex(IHDR_data)[8:16]
-
-            # Convert hexadecimal to decimal
-            width_dec = int(width_hex.replace(' ', ''), 16)
-            height_dec = int(height_hex.replace(' ', ''), 16)
-
-            # Double the values
-            new_width_dec = width_dec * 2
-            new_height_dec = height_dec * 2
-
-            # Convert decimal back to hexadecimal
-            new_width_hex = '{:08X}'.format(new_width_dec)
-            new_height_hex = '{:08X}'.format(new_height_dec)
-
-            # Update picture_arr[0]
-            picture_arr[0][2] = add_spaces_to_hex(new_width_hex + new_height_hex + delete_spaces_from_hex(IHDR_data)[16:])
+            IHDR_index = 0
             
-            # Update CRC
-            chunk_type = b"\x49\x44\x41\x54"
-            chunk_data = bytes.fromhex(hex_string)
-            picture_arr[IDAT_index][3] = hex(zlib.crc32(chunk_type + chunk_data))[2:].upper()
-            print(hex(zlib.crc32(chunk_type + chunk_data)))
+            print(picture_arr[IDAT_index])
 
-            # Write to file
+            new_IDAT, new_IHDR, public_key, private_key = encrypt_idat(picture_arr[IDAT_index], picture_arr[IHDR_index])
+
+            picture_arr[IDAT_index] = new_IDAT
+            picture_arr[IHDR_index] = new_IHDR
+
+            print(f"Here are your keys public and private {public_key, private_key}")
+
             file_to_write = open(sys.argv[1][:-4] + "_rsa_encoded.png", "wb")
             picture_arr.write_to_file(file_to_write)
 
@@ -165,53 +127,18 @@ if __name__ == "__main__":
             n = int(n)
 
             IDAT_index = picture_arr.get_chunk_index("IDAT")
-            data_str = picture_arr[IDAT_index][2]
-            even = False
-            modified_words = ""
-            for i in data_str:
-                if i != " ":
-                    modified_words += i
-                elif even == False:
-                    even = True
-                else:
-                    even = False
-                    modified_words += i
-
-            data_str = modified_words.split()
-            data = [int(x, 16) for x in data_str]
-            decrypted_chunk = decrypt_chunk(data, (d, n))
-
-            hex_string = ' '.join(format(x, '02X') for x in decrypted_chunk)
-            picture_arr[IDAT_index][2] = hex_string
-            picture_arr[IDAT_index][0] = picture_arr[IDAT_index][0]//2
-
-            # You have to change widht and height
-            IHDR_data = picture_arr[0][2]
-
-            width_hex = delete_spaces_from_hex(IHDR_data)[0:8]
-            height_hex = delete_spaces_from_hex(IHDR_data)[8:16]
-
-            # Convert hexadecimal to decimal
-            width_dec = int(width_hex.replace(' ', ''), 16)
-            height_dec = int(height_hex.replace(' ', ''), 16)
-
-            # Make val two times smaller
-            new_width_dec = width_dec // 2
-            new_height_dec = height_dec // 2
-
-            # Convert decimal back to hexadecimal
-            new_width_hex = '{:08X}'.format(int(new_width_dec))
-            new_height_hex = '{:08X}'.format(int(new_height_dec))
-
-            # Update picture_arr[0]
-            picture_arr[0][2] = add_spaces_to_hex(new_width_hex + new_height_hex + delete_spaces_from_hex(IHDR_data)[16:])
-
-            # Update CRC
-            chunk_type = b"\x49\x44\x41\x54"
-            chunk_data = bytes.fromhex(hex_string)
-            picture_arr[IDAT_index][3] = hex(zlib.crc32(chunk_type + chunk_data))[2:].upper()
-            # print(hex(zlib.crc32(chunk_type + chunk_data)))
+            IHDR_index = 0
             
+            new_IDAT, new_IHDR = decrypt_idat(picture_arr[IDAT_index], picture_arr[IHDR_index], (d,n))
+            
+            print(new_IDAT)
+
+
+            picture_arr[IDAT_index] = new_IDAT
+            picture_arr[IHDR_index] = new_IHDR
+
+            print("File decrypted and saved")
+
             file_to_write = open(sys.argv[1][:-16] + "_rsa_decoded.png", "wb")
             picture_arr.write_to_file(file_to_write)
 

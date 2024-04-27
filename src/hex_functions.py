@@ -13,3 +13,7 @@ def delete_spaces_from_hex(hex):
         if i != " ":
             hex_no_space += i
     return hex_no_space
+
+
+def refactor_32_bit(hex):
+    return(add_spaces_to_hex(delete_spaces_from_hex(hex)))
