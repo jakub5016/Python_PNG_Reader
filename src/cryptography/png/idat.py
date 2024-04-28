@@ -13,8 +13,8 @@ def create_hex_chunk_from_int(int_chunk):
     return ' '.join(hex_list)
 
 
-def update_crc_idat(hex_string):
-    chunk_type = bytearray(b"\x49\x44\x41\x54")
+def update_crc(hex_string, type=b"\x49\x44\x41\x54"):
+    chunk_type = bytearray(type)
     hex_digits = hex_string.split()
     chunk_data = bytearray(int(d, 16) for d in hex_digits)
     chunk_type.extend(chunk_data)
@@ -84,12 +84,16 @@ def encrypt_idat(IDAT, IHDR):
     # Change length of chunk
     IDAT[0] = IDAT[0]*2 
     
+    # Update CRC
+    IDAT[3] = update_crc(IDAT[2].upper())
+    print(IDAT)
+
     # Change width and height 
     IHDR = double_width_and_height(IHDR)
 
     # Update CRC
-    IDAT[3] = update_crc_idat(IDAT[2].upper())
-    print(IDAT)
+    IHDR[3] = update_crc(IHDR[2], b'\x49\x48\x44\x52') 
+
     return IDAT, IHDR, public_key, private_key
 
 
@@ -121,11 +125,14 @@ def decrypt_idat(IDAT, IHDR, private_key):
     # Change length of chunk
     IDAT[0] = int(IDAT[0]/2) 
     
+    # Update CRC
+    print(IDAT[2])
+    IDAT[3] = update_crc(IDAT[2])
+
     # Change width and height 
     IHDR = divide_in_half_width_and_height(IHDR)
 
     # Update CRC
-    print(IDAT[2])
-    IDAT[3] = update_crc_idat(IDAT[2])
+    IHDR[3] = update_crc(IHDR[2], b'\x49\x48\x44\x52') 
 
     return IDAT, IHDR
