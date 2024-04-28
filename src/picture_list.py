@@ -139,6 +139,8 @@ class PictueList(list):
             # if (i[3] != None):
             #     print(bytes.fromhex((i[3])))
 
+        file.write(bytes.fromhex("AE426082")) #EOF
+
     def to_byte(self):
         byte_list = []
         byte_list.append(bytes.fromhex(PNG_SIGNATURE_NO_SPACE))

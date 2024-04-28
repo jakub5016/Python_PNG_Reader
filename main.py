@@ -100,8 +100,6 @@ if __name__ == "__main__":
             IDAT_index = picture_arr.get_chunk_index("IDAT")
             IHDR_index = 0
             
-            print(picture_arr[IDAT_index])
-
             new_IDAT, new_IHDR, public_key, private_key = encrypt_idat(picture_arr[IDAT_index], picture_arr[IHDR_index])
 
             picture_arr[IDAT_index] = new_IDAT
@@ -131,8 +129,6 @@ if __name__ == "__main__":
             
             new_IDAT, new_IHDR = decrypt_idat(picture_arr[IDAT_index], picture_arr[IHDR_index], (d,n))
             
-            print(new_IDAT)
-
 
             picture_arr[IDAT_index] = new_IDAT
             picture_arr[IHDR_index] = new_IHDR

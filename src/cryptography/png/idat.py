@@ -15,14 +15,13 @@ def create_hex_chunk_from_int(int_chunk):
 
 def update_crc_idat(hex_string):
     chunk_type = bytearray(b"\x49\x44\x41\x54")
-    hex_digits = add_spaces_to_hex(delete_spaces_from_hex(hex_string)).split()
+    hex_digits = hex_string.split()
     chunk_data = bytearray(int(d, 16) for d in hex_digits)
     chunk_type.extend(chunk_data)
     input_string = add_spaces_to_hex(hex(zlib.crc32(chunk_type))[2:].upper())
-    elements = input_string.split()
-    output_string = ""
 
     elements = input_string.split()
+    output_string = ""
 
     # Iterate through each element
     for element in elements:
@@ -74,14 +73,11 @@ def encrypt_idat(IDAT, IHDR):
     data_str = (IDAT[2].split())
     data = [int(x, 16) for x in data_str]
 
-    print(f"CRC calculated {update_crc_idat(IDAT[2])}")
-
     # Create keys
     public_key, private_key = generate_keypair(8)
 
     # Calculate 
     encrypted_chunk = encrypt_chunk(data, public_key)
-    
     # Create hex to write to chunk 
     IDAT[2] = refactor_32_bit(create_hex_chunk_from_int(encrypted_chunk))
     
@@ -92,8 +88,8 @@ def encrypt_idat(IDAT, IHDR):
     IHDR = double_width_and_height(IHDR)
 
     # Update CRC
-    IDAT[3] = update_crc_idat(IDAT[2])
-
+    IDAT[3] = update_crc_idat(IDAT[2].upper())
+    print(IDAT)
     return IDAT, IHDR, public_key, private_key
 
 
@@ -111,7 +107,6 @@ def decrypt_idat(IDAT, IHDR, private_key):
         else:
             correct_str += number
 
-    print(correct_str)
     data_str = (correct_str.split())
 
     data = [int(x, 16) for x in data_str]
@@ -130,6 +125,7 @@ def decrypt_idat(IDAT, IHDR, private_key):
     IHDR = divide_in_half_width_and_height(IHDR)
 
     # Update CRC
+    print(IDAT[2])
     IDAT[3] = update_crc_idat(IDAT[2])
 
     return IDAT, IHDR
