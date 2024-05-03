@@ -69,30 +69,76 @@ def divide_in_half_width_and_height(IHDR):
     return IHDR
 
 def encrypt_idat(IDAT, IHDR):
+    compressed_data_string = IDAT[2]
+
+    # Convert the compressed data string to a bytes object
+    compressed_data = bytes.fromhex(compressed_data_string.replace(" ", ""))
+
+    # Decompress the compressed data using zlib
+    decompressed_data = zlib.decompress(compressed_data)
+    IDAT_decompressed = []
+    for i in decompressed_data:
+        IDAT_decompressed.append(hex(i)[2:])
+        if len(hex(i)[2:]) == 1:
+            IDAT_decompressed[-1] = "0" + IDAT_decompressed[-1]
+
     # Process data
-    data_str = (IDAT[2].split())
-    data = [int(x, 16) for x in data_str]
+    data = [""]
+    number_of_zeros = 0
+    for index, value in enumerate(IDAT_decompressed):
+        if index % 265 == 0 and (index != 0):
+            data[-1] = int(data[-1], 16)
+            data.append(value)
+        else:
+            data[-1] += value
+            
+    while len(data[-1]) < 512:
+        data[-1] += value
+        number_of_zeros+=1
+    
+    data[-1] = int(data[-1], 16)
 
     # Create keys
-    public_key, private_key = generate_keypair(8)
+    public_key, private_key = generate_keypair(2048)
+    print("Generated key pair")
+    # Encrypt data
 
-    # Calculate 
+    print(len(data))
     encrypted_chunk = encrypt_chunk(data, public_key)
-    # Create hex to write to chunk 
-    IDAT[2] = refactor_32_bit(create_hex_chunk_from_int(encrypted_chunk))
-    
-    # Change length of chunk
-    IDAT[0] = IDAT[0]*2 
-    
-    # Update CRC
-    IDAT[3] = update_crc(IDAT[2].upper())
-    print(IDAT)
+    print(f"Data encrypted")
 
-    # Change width and height 
-    IHDR = double_width_and_height(IHDR)
+    to_flat =[]
+
+    for i in encrypted_chunk:   
+        to_flat.append(hex(i))
+    
+    to_flat_hex = ""
+    for i in to_flat:
+        while len(i) != 1026:
+            i = i[:2] +"0"+ i[2:]      
+        to_flat_hex += i[2:]
+
+
+    to_flat_byte = bytes.fromhex(to_flat_hex)
+
+    compressed_data = zlib.compress(to_flat_byte)
+
+    encrypted_chunk = ""
+    for i in compressed_data:
+        if len(hex(i)[2:]) == 1:
+            encrypted_chunk+= "0" + hex(i)[2:].upper()
+        else:
+            encrypted_chunk+= hex(i)[2:].upper()
+
+    # Update IDAT
+    IDAT[2] = encrypted_chunk
+
+    IDAT[0] = int(len(IDAT[2])//2) 
+
+    IDAT[2] = add_spaces_to_hex(IDAT[2])
 
     # Update CRC
-    IHDR[3] = update_crc(IHDR[2], b'\x49\x48\x44\x52') 
+    IDAT[3] = update_crc(IDAT[2])
 
     return IDAT, IHDR, public_key, private_key
 

@@ -16,16 +16,61 @@ def is_prime(n):
     return True
 
 
+def check_basic_prime(number):
+    first_few_primes = []
+    for i in range(3, 2**10, 2):
+        if is_prime(i):
+            first_few_primes.append(i)
+
+    for prime in first_few_primes:
+        if number % prime == 0:
+            return False
+        
+    return True
+    # for i in 
+
 # Generate prime numbers with proper bit size
 def generate_prime(bits):
     while True:
-        num = random.randint(2**(bits-1), 2**bits - 1)
-        if num % 2 == 0:  # Ensure the number is odd
-            num += 1
-        if is_prime(num):
-            return num
+        random_number = random.randint(2**(bits-1), 2**bits - 1)
+        if random_number % 2 ==0: # Number must be odd but it is bad idea to drop this random number
+            random_number += 1 
+        if (check_basic_prime(random_number)):
+            # Perform Rabin Miller
+            two_power = 2
+            d = 0
+
+            d = random_number - 1
+            while (d % 2 == 0):
+                d //= 2
+            
+            # Make it at least x times to be sure 
+            is_prime_miller = True
+            for i in range(20):
+                if not miller_test(random_number, d):
+                    is_prime_miller = False
+                    break
+            if is_prime_miller:
+                return random_number
 
 
+def miller_test(n, d):
+    a = random.randint(2, n-2)
+    x = pow(a, d, n)
+
+    if x == 1 or x == n-1:
+        return True
+  
+    while(d != n-1):
+        x = (x*x) % n
+        d*= 2
+        if x == 1:
+            return False
+        
+        if x == n-1:
+            return True
+        
+    return False
 # Function to calculate gcd
 def gcd(a, b):
     while b:
@@ -55,10 +100,8 @@ def mod_inverse(e, phi):
 def generate_keypair(bits):
     phi = 0
     while phi < 4:
-        generate_time = time.time()
         p = generate_prime(bits)
 
-        generate_time = time.time()
         q = generate_prime(bits)
 
         n = p * q
@@ -70,7 +113,7 @@ def generate_keypair(bits):
             break
     
     d = mod_inverse(e, phi)
-    print(f"P:{p}, q:{q}, n:{n}, phi:{phi}, e:{e}, d:{d}")
+    # print(f"P:  {p}\nq:     {q}\nn:     {n}\nphi:   {phi}\ne:   {e}\nd:     {d}")
 
     return ((e, n), (d, n))
 

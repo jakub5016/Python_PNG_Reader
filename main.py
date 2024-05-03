@@ -15,6 +15,8 @@ from src.histogram import histogram
 from src.chroma import print_chroma
 from src.cryptography.cbc import cbc_decrypt, cbc_encrypt
 from src.cryptography.rsa import decrypt_chunk, encrypt_chunk, generate_keypair
+import json
+
 # Byte = 2x hex
 
 if __name__ == "__main__":
@@ -99,16 +101,24 @@ if __name__ == "__main__":
         if status == 12:
             IDAT_index = picture_arr.get_chunk_index("IDAT")
             IHDR_index = 0
-            
+
             new_IDAT, new_IHDR, public_key, private_key = encrypt_idat(picture_arr[IDAT_index], picture_arr[IHDR_index])
 
             picture_arr[IDAT_index] = new_IDAT
             picture_arr[IHDR_index] = new_IHDR
 
-            print(f"Here are your keys public and private {public_key, private_key}")
+            print(f"Your public and private keys are stored in JSON file named: {sys.argv[1][:-4]}_json_keys")
 
             file_to_write = open(sys.argv[1][:-4] + "_rsa_encoded.png", "wb")
             picture_arr.write_to_file(file_to_write)
+
+            data_to_pass = {"private_key": hex(private_key[0]), "public_key": hex(public_key[0]),"n": hex(public_key[1])}
+
+            with open(sys.argv[1][:-4] + "_rsa_encoded.json", "w") as file_for_keys:
+                json.dump(data_to_pass, file_for_keys, indent=4)
+
+            print(f"d:{private_key[0]}\n\nn:{private_key[1]}")
+            print("File succesfully encoded")
 
 
         if status == 13:
