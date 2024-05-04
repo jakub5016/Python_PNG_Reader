@@ -107,6 +107,7 @@ def encrypt_idat(IDAT, IHDR):
     encrypted_chunk = encrypt_chunk(data, public_key)
     print(f"Data encrypted")
 
+
     to_flat =[]
 
     for i in encrypted_chunk:   
@@ -118,8 +119,14 @@ def encrypt_idat(IDAT, IHDR):
             i = i[:2] +"0"+ i[2:]      
         to_flat_hex += i[2:]
 
+    print(to_flat_hex)
+    to_flat_hex_filter = "00"
 
-    to_flat_byte = bytes.fromhex(to_flat_hex)
+    for i in range(0, len(to_flat_hex), 64):
+        to_flat_hex_filter += to_flat_hex[i:i+64] +"00"
+
+    to_flat_byte = bytes.fromhex(to_flat_hex_filter)
+    print(to_flat_byte)
 
     compressed_data = zlib.compress(to_flat_byte)
 

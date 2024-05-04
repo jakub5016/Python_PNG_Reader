@@ -117,7 +117,6 @@ if __name__ == "__main__":
             with open(sys.argv[1][:-4] + "_rsa_encoded.json", "w") as file_for_keys:
                 json.dump(data_to_pass, file_for_keys, indent=4)
 
-            print(f"d:{private_key[0]}\n\nn:{private_key[1]}")
             print("File succesfully encoded")
 
 
