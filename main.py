@@ -102,7 +102,7 @@ if __name__ == "__main__":
             IDAT_index = picture_arr.get_chunk_index("IDAT")
             IHDR_index = 0
 
-            new_IDAT, public_key, private_key, number_of_zeros = encrypt_idat(picture_arr[IDAT_index], picture_arr.width)
+            new_IDAT, public_key, private_key, number_of_zeros, to_flat_hex_filter, encrypted_chunk, data = encrypt_idat(picture_arr[IDAT_index], picture_arr.width)
 
             picture_arr[IDAT_index] = new_IDAT
 
@@ -111,7 +111,7 @@ if __name__ == "__main__":
             file_to_write = open(sys.argv[1][:-4] + "_rsa_encoded.png", "wb")
             picture_arr.write_to_file(file_to_write)
 
-            data_to_pass = {"private_key": hex(private_key[0]), "public_key": hex(public_key[0]),"n": hex(public_key[1]), "padding": number_of_zeros}
+            data_to_pass = {"private_key": hex(private_key[0]), "public_key": hex(public_key[0]),"n": hex(public_key[1]), "padding": number_of_zeros, "to_flat_hex_filter": to_flat_hex_filter, "encrypted_chunk": encrypted_chunk, "data": data}
 
             with open(sys.argv[1][:-4] + "_rsa_encoded.json", "w") as file_for_keys:
                 json.dump(data_to_pass, file_for_keys, indent=4)
@@ -120,32 +120,20 @@ if __name__ == "__main__":
 
 
         if status == 13:
-            d = ""
-            while not d.isnumeric():
-                print("Privide private key:\n d = ")
-                d = input()
-            d = int(d)
-
-            n = ""
-            while not n.isnumeric():
-                print("Privide private key:\n n = ")
-                n = input()
-            n = int(n)
-
-            padding = ''
-            while not n.isnumeric():
-                print("Privide padding value:\n padding = ")
-                padding = input()
-            padding = int(n)
+            with open(sys.argv[1][:-4] + ".json", "r") as read_keys:
+                keys = json.load(read_keys)
+            
+            d = int(keys["private_key"], 16)
+            n = int(keys["n"], 16)
+            padding = keys["padding"]
 
             IDAT_index = picture_arr.get_chunk_index("IDAT")
             IHDR_index = 0
             
-            new_IDAT, new_IHDR = decrypt_idat(picture_arr[IDAT_index], picture_arr.width, (d,n), padding)
+            new_IDAT = decrypt_idat(picture_arr[IDAT_index], picture_arr.width, (d,n), padding)
             
 
             picture_arr[IDAT_index] = new_IDAT
-            picture_arr[IHDR_index] = new_IHDR
 
             print("File decrypted and saved")
 
