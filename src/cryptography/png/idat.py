@@ -3,6 +3,8 @@ from src.hex_functions import delete_spaces_from_hex, add_spaces_to_hex, refacto
 import zlib
 
 
+KEY_LENGTH = 2048
+
 def create_hex_chunk_from_int(int_chunk):
     hex_list = []  
     for num in int_chunk:
@@ -16,7 +18,6 @@ def create_hex_chunk_from_int(int_chunk):
 def update_crc(hex_string, type=b"\x49\x44\x41\x54"):
     chunk_type = bytearray(type)
     hex_digits = hex_string.split()
-    print(hex_digits)
     chunk_data = bytearray(int(d, 16) for d in hex_digits)
     chunk_type.extend(chunk_data)
     input_string = add_spaces_to_hex(hex(zlib.crc32(chunk_type))[2:].upper())
@@ -80,18 +81,20 @@ def encrypt_idat(IDAT, width):
         IDAT_decompressed.append(hex(i)[2:])
         if len(hex(i)[2:]) == 1:
             IDAT_decompressed[-1] = "0" + IDAT_decompressed[-1]
-    
+    hex_str = ""
+    for i in IDAT_decompressed:
+        hex_str+= i
+    print(add_spaces_to_hex(hex_str).upper())
     hex_str = '' ### DEBUG
     for i in IDAT_decompressed:
         hex_str += i.upper()
-    print(add_spaces_to_hex(hex_str))
     # Process data
     # Int values from concentrated hex 
     # We want to create big hex to convert it to bit int
     data = [""] 
     number_of_zeros = 0
     for index, value in enumerate(IDAT_decompressed):
-        if index % 265 == 0 and (index != 0):
+        if index % (KEY_LENGTH // 4) == 0 and (index != 0): # 265 hex = 2048 bit === 8
             data[-1] = int(data[-1], 16)
             data.append(value)
         else:
@@ -102,9 +105,8 @@ def encrypt_idat(IDAT, width):
         number_of_zeros+=1
     
     data[-1] = int(data[-1], 16)
-
     # Create keys
-    public_key, private_key = generate_keypair(2048)
+    public_key, private_key = generate_keypair(KEY_LENGTH)
     print("Generated key pair")
     # Encrypt data
     print(f"Ammout of chunks to encrypt: {len(data)}")
@@ -119,9 +121,9 @@ def encrypt_idat(IDAT, width):
         to_flat.append(hex(i))
     
     
-    to_flat_hex = "" #<-
+    to_flat_hex = "" 
     for i in to_flat:
-        while len(i) != 1026: # Fixed size of one batch to convert 
+        while len(i) != (KEY_LENGTH//2 + 2): # Fixed size of one batch to convert 
             i = i[:2] +"0"+ i[2:]      
         to_flat_hex += i[2:]
 
@@ -182,15 +184,17 @@ def decrypt_idat(IDAT, width, private_key, padding=0):
     # Decrypt data
     decrypted_chunk = decrypt_chunk(data, private_key)
     print("Succesfully decrypted")
-    hex_string = '00'
+    hex_string = ''
     for decrypded_int in decrypted_chunk:
+        if len(hex(decrypded_int)[2:]) != 1024:
+            hex_string += "0" * (1024 - len(hex(decrypded_int)[2:]))
         hex_string += hex(decrypded_int)[2:].upper()
 
+    print(add_spaces_to_hex(hex_string[:len(hex_string) - padding]).upper())
     # Convert to bytes and compress
-    to_flat_byte = bytes.fromhex(hex_string)
+    to_flat_byte = bytes.fromhex(hex_string[:len(hex_string) - padding])
     compressed_data = zlib.compress(to_flat_byte)
     decrypted_chunk = add_spaces_to_hex(hex_from_byte(compressed_data))
-    print(add_spaces_to_hex(decrypted_chunk))
 
     # Create hex to write to chunk 
     IDAT[2] = decrypted_chunk
