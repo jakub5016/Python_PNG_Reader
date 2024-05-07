@@ -1,7 +1,8 @@
 from ..rsa import generate_keypair, encrypt_chunk, decrypt_chunk
 from src.hex_functions import delete_spaces_from_hex, add_spaces_to_hex, refactor_32_bit
 import zlib
-
+import time
+KEY_LENGHT = 4096
 
 def create_hex_chunk_from_int(int_chunk):
     hex_list = []  
@@ -16,7 +17,6 @@ def create_hex_chunk_from_int(int_chunk):
 def update_crc(hex_string, type=b"\x49\x44\x41\x54"):
     chunk_type = bytearray(type)
     hex_digits = hex_string.split()
-    print(hex_digits)
     chunk_data = bytearray(int(d, 16) for d in hex_digits)
     chunk_type.extend(chunk_data)
     input_string = add_spaces_to_hex(hex(zlib.crc32(chunk_type))[2:].upper())
@@ -69,7 +69,7 @@ def divide_in_half_width_and_height(IHDR):
 
     return IHDR
 
-def encrypt_idat(IDAT, width):
+def encrypt_idat(IDAT, width, private_key=None, public_key=None):
     # Convert the compressed data string to a bytes object
     compressed_data = bytes.fromhex(IDAT[2].replace(" ", ""))
 
@@ -84,34 +84,38 @@ def encrypt_idat(IDAT, width):
     hex_str = '' ### DEBUG
     for i in IDAT_decompressed:
         hex_str += i.upper()
-    print(add_spaces_to_hex(hex_str))
     # Process data
     # Int values from concentrated hex 
     # We want to create big hex to convert it to bit int
     data = [""] 
     number_of_zeros = 0
     for index, value in enumerate(IDAT_decompressed):
-        if index % 265 == 0 and (index != 0):
+        if index % (KEY_LENGHT/8) == 0 and (index != 0):
             data[-1] = int(data[-1], 16)
             data.append(value)
         else:
             data[-1] += value
             
-    while len(data[-1]) < 512:
+    while len(data[-1]) < (KEY_LENGHT/4):
         data[-1] += '0'
         number_of_zeros+=1
     
     data[-1] = int(data[-1], 16)
 
     # Create keys
-    public_key, private_key = generate_keypair(2048)
-    print("Generated key pair")
+    if (public_key == None) and (private_key == None):
+        stat_time = time.time()
+        public_key, private_key = generate_keypair(KEY_LENGHT)
+        print(f"Generated key pair  in time {time.time() - stat_time} s")
+
+    else:
+        print("It seems you have pregenerated key values in keys.txt file.\nI've selected one")
     # Encrypt data
     print(f"Ammout of chunks to encrypt: {len(data)}")
-
+    stat_time = time.time()
     encrypted_chunk = encrypt_chunk(data, public_key)
     tosave = encrypted_chunk
-    print(f"Data encrypted")
+    print(f"Data encrypted in time: {time.time() - stat_time} s")
 
     # Preapare data to compression
     to_flat =[]
@@ -121,7 +125,7 @@ def encrypt_idat(IDAT, width):
     
     to_flat_hex = "" #<-
     for i in to_flat:
-        while len(i) != 1026: # Fixed size of one batch to convert 
+        while len(i) != (KEY_LENGHT/2) +2: # Fixed size of one batch to convert 
             i = i[:2] +"0"+ i[2:]      
         to_flat_hex += i[2:]
 
@@ -150,7 +154,7 @@ def encrypt_idat(IDAT, width):
     # Update CRC
     IDAT[3] = update_crc(IDAT[2])
 
-    return IDAT, public_key, private_key, number_of_zeros, to_flat_hex_filter, tosave, data
+    return IDAT, public_key, private_key, number_of_zeros
 
 
 def decrypt_idat(IDAT, width, private_key, padding=0):
@@ -169,7 +173,7 @@ def decrypt_idat(IDAT, width, private_key, padding=0):
     # We know that every batch have 1026 size (including "0x" so it will be 1024)
     batches =[""]
     for index, item in enumerate(hex_val_no_filter):
-        if (index % 1024 == 0) and (index !=0):
+        if (index % (KEY_LENGHT/2) == 0) and (index !=0):
             batches.append(item)
         else:
             batches[-1] += item
@@ -187,10 +191,9 @@ def decrypt_idat(IDAT, width, private_key, padding=0):
         hex_string += hex(decrypded_int)[2:].upper()
 
     # Convert to bytes and compress
-    to_flat_byte = bytes.fromhex(hex_string)
+    to_flat_byte = bytes.fromhex(hex_string[:len(hex_string) - padding])
     compressed_data = zlib.compress(to_flat_byte)
     decrypted_chunk = add_spaces_to_hex(hex_from_byte(compressed_data))
-    print(add_spaces_to_hex(decrypted_chunk))
 
     # Create hex to write to chunk 
     IDAT[2] = decrypted_chunk
