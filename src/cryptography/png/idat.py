@@ -1,17 +1,9 @@
-from ..rsa import generate_keypair, encrypt_chunk, decrypt_chunk
+from ..rsa import generate_keypair, encrypt_chunk, decrypt_chunk, encrypt_chunk_cbc, decrypt_chunk_cbc
 from src.hex_functions import delete_spaces_from_hex, add_spaces_to_hex, refactor_32_bit
 import zlib
 import time
+import random
 KEY_LENGHT = 4096
-
-def create_hex_chunk_from_int(int_chunk):
-    hex_list = []  
-    for num in int_chunk:
-        hex_num = hex(num)[2:]
-        width = (len(hex_num) + 3) // 4 * 4  # Calculate width to ensure full number output
-        hex_list.append('{:0>{width}}'.format(hex_num, width=width))
-
-    return ' '.join(hex_list)
 
 
 def update_crc(hex_string, type=b"\x49\x44\x41\x54"):
@@ -38,38 +30,7 @@ def update_crc(hex_string, type=b"\x49\x44\x41\x54"):
     output_string = output_string.strip()
     return output_string
 
-def double_width_and_height(IHDR):
-    width = delete_spaces_from_hex(IHDR[2])[0:8]
-    height = delete_spaces_from_hex(IHDR[2])[8:16]
-
-    width_dec = int(width.replace(' ', ''), 16)
-    height_dec = int(height.replace(' ', ''), 16)
-
-    new_width, new_height = width_dec*2, height_dec*2
-
-    new_width_hex = '{:08X}'.format(new_width)
-    new_height_hex = '{:08X}'.format(new_height)
-    IHDR[2] = add_spaces_to_hex(new_width_hex + new_height_hex + delete_spaces_from_hex(IHDR[2])[16:])
-
-    return IHDR
-
-def divide_in_half_width_and_height(IHDR):
-    width = delete_spaces_from_hex(IHDR[2])[0:8]
-    height = delete_spaces_from_hex(IHDR[2])[8:16]
-
-    width_dec = int(width.replace(' ', ''), 16)
-    height_dec = int(height.replace(' ', ''), 16)
-
-    new_width, new_height = int(width_dec/2), int(height_dec/2)
-
-    new_width_hex = '{:08X}'.format(new_width)
-    new_height_hex = '{:08X}'.format(new_height)
-
-    IHDR[2] = add_spaces_to_hex(new_width_hex + new_height_hex + delete_spaces_from_hex(IHDR[2])[16:])
-
-    return IHDR
-
-def encrypt_idat(IDAT, width, private_key=None, public_key=None):
+def encrypt_idat(IDAT, width, private_key=None, public_key=None, type="ECB"):
     # Convert the compressed data string to a bytes object
     compressed_data = bytes.fromhex(IDAT[2].replace(" ", ""))
 
@@ -81,9 +42,6 @@ def encrypt_idat(IDAT, width, private_key=None, public_key=None):
         if len(hex(i)[2:]) == 1:
             IDAT_decompressed[-1] = "0" + IDAT_decompressed[-1]
     
-    hex_str = '' ### DEBUG
-    for i in IDAT_decompressed:
-        hex_str += i.upper()
     # Process data
     # Int values from concentrated hex 
     # We want to create big hex to convert it to bit int
@@ -112,9 +70,17 @@ def encrypt_idat(IDAT, width, private_key=None, public_key=None):
         print("It seems you have pregenerated key values in keys.txt file.\nI've selected one")
     # Encrypt data
     print(f"Ammout of chunks to encrypt: {len(data)}")
-    stat_time = time.time()
-    encrypted_chunk = encrypt_chunk(data, public_key)
-    tosave = encrypted_chunk
+
+
+    if type == "ECB":
+        stat_time = time.time()
+        encrypted_chunk = encrypt_chunk(data, public_key)
+    else:
+        iv = random.randbytes(256)
+        iv = int.from_bytes(iv, "big")
+        stat_time = time.time()
+        encrypted_chunk = encrypt_chunk_cbc(data, iv , public_key)
+
     print(f"Data encrypted in time: {time.time() - stat_time} s")
 
     # Preapare data to compression
@@ -154,10 +120,12 @@ def encrypt_idat(IDAT, width, private_key=None, public_key=None):
     # Update CRC
     IDAT[3] = update_crc(IDAT[2])
 
-    return IDAT, public_key, private_key, number_of_zeros
+    if type == "ECB":
+        return IDAT, public_key, private_key, number_of_zeros
+    else:
+        return IDAT, public_key, private_key, number_of_zeros, iv
 
-
-def decrypt_idat(IDAT, width, private_key, padding=0):
+def decrypt_idat(IDAT, width, private_key, padding=0, iv=-1):
     # Process data
     compressed_data = bytes.fromhex(IDAT[2].replace(" ", ""))
 
@@ -184,7 +152,11 @@ def decrypt_idat(IDAT, width, private_key, padding=0):
         data.append(int(batch, 16))
 
     # Decrypt data
-    decrypted_chunk = decrypt_chunk(data, private_key)
+    if iv != -1:
+        decrypted_chunk = decrypt_chunk_cbc(data, iv, private_key)
+    else:
+        decrypted_chunk = decrypt_chunk(data, private_key)
+    
     print("Succesfully decrypted")
     hex_string = '00'
     for decrypded_int in decrypted_chunk:
