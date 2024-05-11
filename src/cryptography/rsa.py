@@ -133,12 +133,10 @@ def decrypt_chunk(chunk, private_key):
 
 def encrypt_chunk_cbc(chunk, iv, public_key):
     (e, n) = public_key
-    print(f"Data got:   {chunk}")
     arr = [pow(chunk[0] ^ iv, e, n)]
     for pixel in chunk[1:]:
         arr.append(pow(pixel ^ arr[-1], e, n))
 
-    print(f"Encrypted:   {arr}")
     return arr
 
 
@@ -146,11 +144,9 @@ def decrypt_chunk_cbc(chunk, iv,private_key):
     (d, n) = private_key
     arr = [pow(chunk[0], d, n) ^iv]
     arr_2 = [pow(chunk[0], d, n) ^iv]
-    print(f"Data got:   {chunk}")
     for index, pixel in enumerate(chunk[1:]):
         arr.append(pow(pixel, d, n) ^ chunk[index])
         # arr[-1] = arr[-1] ^ chunk[index-1]
         arr_2.append(pow(pixel, d, n))
 
-    print(f"Decrypted:   {arr}")
     return arr
