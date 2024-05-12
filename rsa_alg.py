@@ -99,7 +99,6 @@ if __name__ == "__main__":
             
             new_IDAT = decrypt_idat(picture_arr[IDAT_index], picture_arr.width, (d,n), padding)
             
-
             picture_arr[IDAT_index] = new_IDAT
 
             print("File decrypted and saved")

@@ -41,7 +41,7 @@ def encrypt_idat(IDAT, width, private_key=None, public_key=None, type="ECB"):
         IDAT_decompressed.append(hex(i)[2:])
         if len(hex(i)[2:]) == 1:
             IDAT_decompressed[-1] = "0" + IDAT_decompressed[-1]
-    
+
     # Process data
     # Int values from concentrated hex 
     # We want to create big hex to convert it to bit int
@@ -53,7 +53,7 @@ def encrypt_idat(IDAT, width, private_key=None, public_key=None, type="ECB"):
             data.append(value)
         else:
             data[-1] += value
-            
+    
     while len(data[-1]) < (KEY_LENGHT/4):
         data[-1] += '0'
         number_of_zeros+=1
@@ -69,9 +69,7 @@ def encrypt_idat(IDAT, width, private_key=None, public_key=None, type="ECB"):
     else:
         print("It seems you have pregenerated key values in keys.txt file.\nI've selected one")
     # Encrypt data
-    print(f"Ammout of chunks to encrypt: {len(data)}")
-
-
+    print(f"Ammout of chunks to encrypt: {len(data)}")    
     if type == "ECB":
         stat_time = time.time()
         encrypted_chunk = encrypt_chunk(data, public_key)
@@ -80,7 +78,7 @@ def encrypt_idat(IDAT, width, private_key=None, public_key=None, type="ECB"):
         iv = int.from_bytes(iv, "big")
         stat_time = time.time()
         encrypted_chunk = encrypt_chunk_cbc(data, iv , public_key)
-
+    
     print(f"Data encrypted in time: {time.time() - stat_time} s")
 
     # Preapare data to compression
@@ -158,8 +156,11 @@ def decrypt_idat(IDAT, width, private_key, padding=0, iv=-1):
         decrypted_chunk = decrypt_chunk(data, private_key)
     
     print("Succesfully decrypted")
-    hex_string = '00'
+    hex_string = ''
     for decrypded_int in decrypted_chunk:
+        if len(hex(decrypded_int)[2:].upper()) < 1024:
+            hex_string+= "0" * (1024 - len(hex(decrypded_int)[2:].upper()))
+
         hex_string += hex(decrypded_int)[2:].upper()
 
     # Convert to bytes and compress
