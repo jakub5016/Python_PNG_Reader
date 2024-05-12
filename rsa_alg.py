@@ -203,13 +203,15 @@ if __name__ == "__main__":
                 keys = json.load(read_keys)
             
             d = int(keys["private_key"], 16)
+            e = int(keys["public_key"], 16)
             n = int(keys["n"], 16)
+            p = int(keys["p"], 16)
+            q = int(keys["q"], 16)
             padding = keys["padding"]
-
             IDAT_index = picture_arr.get_chunk_index("IDAT")
             IHDR_index = 0
             
-            new_IDAT = decrypt_idat(picture_arr[IDAT_index], picture_arr.width, (d,n), padding)
+            new_IDAT = decrypt_idat(picture_arr[IDAT_index], picture_arr.width, (d,n), padding, e, p, q)
             
             picture_arr[IDAT_index] = new_IDAT
 

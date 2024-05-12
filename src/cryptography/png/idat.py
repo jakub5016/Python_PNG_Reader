@@ -84,7 +84,6 @@ def encrypt_idat(IDAT, width, private_key=None, public_key=None, type="ECB"):
         for value in data:
             val_to_encrypt = (value).to_bytes(-(value.bit_length()//-8), "big")
             encrypted_chunk.append(int.from_bytes(rsa.encrypt(val_to_encrypt, lib_public_key), "big"))
-        print(encrypted_chunk)
     else:
         iv = random.randbytes(256)
         iv = int.from_bytes(iv, "big")
@@ -135,7 +134,7 @@ def encrypt_idat(IDAT, width, private_key=None, public_key=None, type="ECB"):
     else:
         return IDAT, public_key, private_key, number_of_zeros, iv
 
-def decrypt_idat(IDAT, width, private_key, padding=0, iv=-1):
+def decrypt_idat(IDAT, width, private_key, padding=0, e=None, p=None, q=None, iv=-1):
     # Process data
     compressed_data = bytes.fromhex(IDAT[2].replace(" ", ""))
 
@@ -164,6 +163,12 @@ def decrypt_idat(IDAT, width, private_key, padding=0, iv=-1):
     # Decrypt data
     if iv != -1:
         decrypted_chunk = decrypt_chunk_cbc(data, iv, private_key)
+    elif p != None: # encrypted using RSA lib
+        lib_private_key = rsa.PrivateKey(private_key[1], e, private_key[0], p, q)
+        decrypted_chunk = []
+        for value in data:
+            val_to_encrypt = (value).to_bytes(-(value.bit_length()//-8), "big")
+            decrypted_chunk.append(int.from_bytes(rsa.decrypt(val_to_encrypt, lib_private_key), "big"))
     else:
         decrypted_chunk = decrypt_chunk(data, private_key)
     
