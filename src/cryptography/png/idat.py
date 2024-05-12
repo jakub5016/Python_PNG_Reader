@@ -1,6 +1,7 @@
 from ..rsa import generate_keypair, encrypt_chunk, decrypt_chunk, encrypt_chunk_cbc, decrypt_chunk_cbc
 from src.hex_functions import delete_spaces_from_hex, add_spaces_to_hex, refactor_32_bit
 import zlib
+import rsa
 import time
 import random
 KEY_LENGHT = 4096
@@ -63,7 +64,10 @@ def encrypt_idat(IDAT, width, private_key=None, public_key=None, type="ECB"):
     # Create keys
     if (public_key == None) and (private_key == None):
         stat_time = time.time()
-        public_key, private_key = generate_keypair(KEY_LENGHT)
+        if type=="lib":
+            public_key, private_key = generate_keypair(KEY_LENGHT)
+        else:
+            public_key, private_key = generate_keypair(KEY_LENGHT)
         print(f"Generated key pair  in time {time.time() - stat_time} s")
 
     else:
@@ -73,6 +77,14 @@ def encrypt_idat(IDAT, width, private_key=None, public_key=None, type="ECB"):
     if type == "ECB":
         stat_time = time.time()
         encrypted_chunk = encrypt_chunk(data, public_key)
+    elif type == "lib":
+        lib_public_key = rsa.PublicKey(public_key[1],public_key[0])
+        stat_time = time.time()
+        encrypted_chunk = []
+        for value in data:
+            val_to_encrypt = (value).to_bytes(-(value.bit_length()//-8), "big")
+            encrypted_chunk.append(int.from_bytes(rsa.encrypt(val_to_encrypt, lib_public_key), "big"))
+        print(encrypted_chunk)
     else:
         iv = random.randbytes(256)
         iv = int.from_bytes(iv, "big")
@@ -118,7 +130,7 @@ def encrypt_idat(IDAT, width, private_key=None, public_key=None, type="ECB"):
     # Update CRC
     IDAT[3] = update_crc(IDAT[2])
 
-    if type == "ECB":
+    if type != "CBC":
         return IDAT, public_key, private_key, number_of_zeros
     else:
         return IDAT, public_key, private_key, number_of_zeros, iv

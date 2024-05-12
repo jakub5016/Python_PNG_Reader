@@ -93,7 +93,7 @@ def mod_inverse(e, phi):
 
 
 # RSA keypair generation with larger bit size
-def generate_keypair(bits):
+def generate_keypair(bits, with_p_and_q= False):
     phi = 0
     while phi < 4:
         p = generate_prime(bits)
@@ -109,8 +109,8 @@ def generate_keypair(bits):
             break
     
     d = mod_inverse(e, phi)
-    # print(f"P:  {p}\nq:     {q}\nn:     {n}\nphi:   {phi}\ne:   {e}\nd:     {d}")
-
+    if with_p_and_q:
+        return ((e, n), (d, n), (p,q))
     return ((e, n), (d, n))
 
 
