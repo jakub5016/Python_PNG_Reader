@@ -4,7 +4,7 @@ import zlib
 import rsa
 import time
 import random
-KEY_LENGHT = 4096
+KEY_LENGHT = 1024
 
 
 def update_crc(hex_string, type=b"\x49\x44\x41\x54"):
@@ -31,7 +31,7 @@ def update_crc(hex_string, type=b"\x49\x44\x41\x54"):
     output_string = output_string.strip()
     return output_string
 
-def encrypt_idat(IDAT, width, private_key=None, public_key=None, type="ECB"):
+def encrypt_idat(IDAT, width, bit_depth=2 ,private_key=None, public_key=None, type="ECB"):
     # Convert the compressed data string to a bytes object
     compressed_data = bytes.fromhex(IDAT[2].replace(" ", ""))
 
@@ -42,7 +42,7 @@ def encrypt_idat(IDAT, width, private_key=None, public_key=None, type="ECB"):
         IDAT_decompressed.append(hex(i)[2:])
         if len(hex(i)[2:]) == 1:
             IDAT_decompressed[-1] = "0" + IDAT_decompressed[-1]
-
+    
     # Process data
     # Int values from concentrated hex 
     # We want to create big hex to convert it to bit int
@@ -85,13 +85,12 @@ def encrypt_idat(IDAT, width, private_key=None, public_key=None, type="ECB"):
             val_to_encrypt = (value).to_bytes(-(value.bit_length()//-8), "big")
             encrypted_chunk.append(int.from_bytes(rsa.encrypt(val_to_encrypt, lib_public_key), "big"))
     else:
-        iv = random.randbytes(256)
+        iv = random.randbytes(KEY_LENGHT//256)
         iv = int.from_bytes(iv, "big")
         stat_time = time.time()
         encrypted_chunk = encrypt_chunk_cbc(data, iv , public_key)
     
     print(f"Data encrypted in time: {time.time() - stat_time} s")
-
     # Preapare data to compression
     to_flat =[]
     for i in encrypted_chunk:   
@@ -101,13 +100,18 @@ def encrypt_idat(IDAT, width, private_key=None, public_key=None, type="ECB"):
     to_flat_hex = "" #<-
     for i in to_flat:
         while len(i) != (KEY_LENGHT/2) +2: # Fixed size of one batch to convert 
+            if len(i) > (KEY_LENGHT/2) +2:
+                print(len(i)) 
+                exit()
             i = i[:2] +"0"+ i[2:]      
         to_flat_hex += i[2:]
 
     # Apply filter to every row
     to_flat_hex_filter = "00"
-    for i in range(0, len(to_flat_hex), width*2):
-        to_flat_hex_filter += to_flat_hex[i:i+(width*2)] +"00"
+    for i in range(0, len(to_flat_hex), width*bit_depth):
+        to_flat_hex_filter += to_flat_hex[i:i+(width*bit_depth)] +"00"
+    removed_hex = to_flat_hex_filter[len(IDAT_decompressed)*2:]
+    to_flat_hex_filter = to_flat_hex_filter[:len(IDAT_decompressed)*2]
 
     # Convert to bytes
     to_flat_byte = bytes.fromhex(to_flat_hex_filter)
@@ -130,22 +134,24 @@ def encrypt_idat(IDAT, width, private_key=None, public_key=None, type="ECB"):
     IDAT[3] = update_crc(IDAT[2])
 
     if type != "CBC":
-        return IDAT, public_key, private_key, number_of_zeros
+        return IDAT, public_key, private_key, number_of_zeros, removed_hex
     else:
-        return IDAT, public_key, private_key, number_of_zeros, iv
+        return IDAT, public_key, private_key, number_of_zeros, removed_hex , iv
 
-def decrypt_idat(IDAT, width, private_key, padding=0, e=None, p=None, q=None, iv=-1):
+def decrypt_idat(IDAT, width, private_key, bit_depth=2, padding=0, removed_hex=None, e=None, p=None, q=None, iv=-1):
     # Process data
-    compressed_data = bytes.fromhex(IDAT[2].replace(" ", ""))
+    compressed_data = bytes.fromhex((IDAT[2]).replace(" ", ""))
 
     # Decompress the compressed data using zlib
     decompressed_data = zlib.decompress(compressed_data) # Bytes
     hex_val = hex_from_byte(decompressed_data)
+    if removed_hex != None:
+        hex_val += removed_hex
     # Remove filters
     hex_val = hex_val[2:]
     hex_val_no_filter = ''
-    for i in range(0, len(hex_val), (2*width) +2 ):
-        hex_val_no_filter += hex_val[i:i+(2*width)]
+    for i in range(0, len(hex_val), (bit_depth*width) +2 ):
+        hex_val_no_filter += hex_val[i:i+(bit_depth*width)]
 
     # We know that every batch have 1026 size (including "0x" so it will be 1024)
     batches =[""]
@@ -175,8 +181,8 @@ def decrypt_idat(IDAT, width, private_key, padding=0, e=None, p=None, q=None, iv
     print("Succesfully decrypted")
     hex_string = ''
     for decrypded_int in decrypted_chunk:
-        if len(hex(decrypded_int)[2:].upper()) < 1024:
-            hex_string+= "0" * (1024 - len(hex(decrypded_int)[2:].upper()))
+        if len(hex(decrypded_int)[2:].upper()) < (KEY_LENGHT//4):
+            hex_string+= "0" * ((KEY_LENGHT//4) - len(hex(decrypded_int)[2:].upper()))
 
         hex_string += hex(decrypded_int)[2:].upper()
 
@@ -189,7 +195,7 @@ def decrypt_idat(IDAT, width, private_key, padding=0, e=None, p=None, q=None, iv
     IDAT[2] = decrypted_chunk
     
     # Change length of chunk
-    IDAT[0] = int(IDAT[0]/2) 
+    IDAT[0] = int(len(IDAT[2])//2) 
     
     # Update CRC
     IDAT[3] = update_crc(IDAT[2])

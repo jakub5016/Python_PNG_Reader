@@ -118,24 +118,34 @@ def generate_keypair(bits, with_p_and_q= False):
 def encrypt_chunk(chunk, public_key):
     (e, n) = public_key
     arr = []
-    for pixel in chunk:
+    for index, pixel in enumerate(chunk):
+        if index % 10 == 0:
+            print(f"{index}/{len(chunk)} encrypted")
         arr.append(pow(pixel, e, n))
+
+    print(f"{len(chunk)}/{len(chunk)} encrypted")
     return arr
 
 
 def decrypt_chunk(chunk, private_key):
     (d, n) = private_key
     arr = []
-    for pixel in chunk:
+    for index, pixel in enumerate(chunk):
+        if index % 10 == 0:
+            print(f"{index}/{len(chunk)} decrypted")
         arr.append(pow(pixel, d, n))
+    print(f"{len(chunk)}/{len(chunk)} decrypted")
     return arr
 
 
 def encrypt_chunk_cbc(chunk, iv, public_key):
     (e, n) = public_key
     arr = [pow(chunk[0] ^ iv, e, n)]
-    for pixel in chunk[1:]:
+    for index, pixel in enumerate(chunk[1:]):
+        if index % 5 == 0:
+            print(f"{index}/{len(chunk)} encrypted")
         arr.append(pow(pixel ^ arr[-1], e, n))
+    print(f"{len(chunk)}/{len(chunk)} encrypted")
 
     return arr
 
@@ -145,8 +155,11 @@ def decrypt_chunk_cbc(chunk, iv,private_key):
     arr = [pow(chunk[0], d, n) ^iv]
     arr_2 = [pow(chunk[0], d, n) ^iv]
     for index, pixel in enumerate(chunk[1:]):
+        if index % 5 == 0:
+            print(f"{index}/{len(chunk)} decrypted")
         arr.append(pow(pixel, d, n) ^ chunk[index])
         # arr[-1] = arr[-1] ^ chunk[index-1]
         arr_2.append(pow(pixel, d, n))
+    print(f"{len(chunk)}/{len(chunk)} decrypted")
 
     return arr

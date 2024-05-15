@@ -56,21 +56,11 @@ if __name__ == "__main__":
             IDAT_index = picture_arr.get_chunk_index("IDAT")
             IHDR_index = 0
 
-            try:
-                keys_file = open("keys.txt", "r")
-                lines = keys_file.readlines()
-                selected_line = random.randint(0, len(lines)-1)
-                while selected_line % 4 != 0:
-                    selected_line = random.randint(0, len(lines)-1)
-                
-                e = int(lines[selected_line][2:])
-                d = int(lines[selected_line+1][2:])
-                n = int(lines[selected_line+2][2:])
+            if picture_arr.color_type == 6:
+                new_IDAT, public_key, private_key, number_of_zeros, removed_hex = encrypt_idat(picture_arr[IDAT_index], picture_arr.width ,bit_depth=8)
+            else:
+                new_IDAT, public_key, private_key, number_of_zeros, removed_hex = encrypt_idat(picture_arr[IDAT_index], picture_arr.width)
 
-                new_IDAT, public_key, private_key, number_of_zeros = encrypt_idat(picture_arr[IDAT_index], picture_arr.width, private_key=(d , n) ,public_key=(e , n))
-
-            except FileNotFoundError:
-                new_IDAT, public_key, private_key, number_of_zeros = encrypt_idat(picture_arr[IDAT_index], picture_arr.width)
 
             picture_arr[IDAT_index] = new_IDAT
 
@@ -79,7 +69,11 @@ if __name__ == "__main__":
             file_to_write = open(sys.argv[1][:-4] + "_rsa_encoded.png", "wb")
             picture_arr.write_to_file(file_to_write)
 
-            data_to_pass = {"private_key": hex(private_key[0]), "public_key": hex(public_key[0]),"n": hex(public_key[1]), "padding": number_of_zeros}
+            data_to_pass = {"private_key": hex(private_key[0]), 
+                            "public_key": hex(public_key[0]),
+                            "n": hex(public_key[1]), 
+                            "padding": number_of_zeros,
+                            "removed_hex": removed_hex}
 
             with open(sys.argv[1][:-4] + "_rsa_encoded.json", "w") as file_for_keys:
                 json.dump(data_to_pass, file_for_keys, indent=4)
@@ -94,11 +88,11 @@ if __name__ == "__main__":
             d = int(keys["private_key"], 16)
             n = int(keys["n"], 16)
             padding = keys["padding"]
-
+            removed_hex = keys["removed_hex"]
             IDAT_index = picture_arr.get_chunk_index("IDAT")
             IHDR_index = 0
             
-            new_IDAT = decrypt_idat(picture_arr[IDAT_index], picture_arr.width, (d,n), padding)
+            new_IDAT = decrypt_idat(picture_arr[IDAT_index], picture_arr.width, private_key=(d,n), padding=padding, removed_hex=removed_hex)
             
             picture_arr[IDAT_index] = new_IDAT
 
@@ -111,22 +105,11 @@ if __name__ == "__main__":
             IDAT_index = picture_arr.get_chunk_index("IDAT")
             IHDR_index = 0
 
-            try:
-                keys_file = open("keys.txt", "r")
-                lines = keys_file.readlines()
-                selected_line = random.randint(0, len(lines)-1)
-                while selected_line % 4 != 0:
-                    selected_line = random.randint(0, len(lines)-1)
-                
-                e = int(lines[selected_line][2:])
-                d = int(lines[selected_line+1][2:])
-                n = int(lines[selected_line+2][2:])
-
-                new_IDAT, public_key, private_key, number_of_zeros, iv = encrypt_idat(picture_arr[IDAT_index], picture_arr.width, private_key=(d , n) ,public_key=(e , n), type="CBC")
-
-            except FileNotFoundError:
-                new_IDAT, public_key, private_key, number_of_zeros, iv = encrypt_idat(picture_arr[IDAT_index], picture_arr.width, type="CBC")
-
+            if picture_arr.color_type == 6:
+                new_IDAT, public_key, private_key, number_of_zeros, removed_hex, iv = encrypt_idat(picture_arr[IDAT_index], picture_arr.width, bit_depth=8,type="CBC")
+            else:
+                new_IDAT, public_key, private_key, number_of_zeros, removed_hex, iv = encrypt_idat(picture_arr[IDAT_index], picture_arr.width, type="CBC")
+            
             picture_arr[IDAT_index] = new_IDAT
 
             print(f"Your public and private keys are stored in JSON file named: {sys.argv[1][:-4]}_json_keys")
@@ -134,7 +117,12 @@ if __name__ == "__main__":
             file_to_write = open(sys.argv[1][:-4] + "_rsa_cbc_encoded.png", "wb")
             picture_arr.write_to_file(file_to_write)
 
-            data_to_pass = {"private_key": hex(private_key[0]), "public_key": hex(public_key[0]),"n": hex(public_key[1]), "padding": number_of_zeros, "iv":iv}
+            data_to_pass = {"private_key": hex(private_key[0]), 
+                            "public_key": hex(public_key[0]),
+                            "n": hex(public_key[1]), 
+                            "padding": number_of_zeros, 
+                            "removed_hex": removed_hex , 
+                            "iv":iv}
 
             with open(sys.argv[1][:-4] + "_rsa_cbc_encoded.json", "w") as file_for_keys:
                 json.dump(data_to_pass, file_for_keys, indent=4)
@@ -149,11 +137,12 @@ if __name__ == "__main__":
             n = int(keys["n"], 16)
             padding = keys["padding"]
             iv = int(keys["iv"])
+            removed_hex = keys["removed_hex"]
 
             IDAT_index = picture_arr.get_chunk_index("IDAT")
             IHDR_index = 0
             
-            new_IDAT = decrypt_idat(picture_arr[IDAT_index], picture_arr.width, (d,n), padding, iv)
+            new_IDAT = decrypt_idat(picture_arr[IDAT_index], picture_arr.width, private_key=(d,n),removed_hex=removed_hex, padding=padding, iv=iv)
             
 
             picture_arr[IDAT_index] = new_IDAT
@@ -174,9 +163,10 @@ if __name__ == "__main__":
                 p = int(key_pair["p"], 16)
                 q = int(key_pair["q"], 16)
 
-            new_IDAT, public_key, private_key, number_of_zeros= encrypt_idat(picture_arr[IDAT_index], picture_arr.width, private_key=(d , n) ,public_key=(e , n), type="lib")
-            print("new idata kj")
-            print(new_IDAT)
+            if picture_arr.color_type == 6:
+                new_IDAT, public_key, private_key, number_of_zeros, removed_hex= encrypt_idat(picture_arr[IDAT_index], picture_arr.width, bit_depth=8 ,private_key=(d , n) ,public_key=(e , n), type="lib")
+            else:
+                new_IDAT, public_key, private_key, number_of_zeros, removed_hex= encrypt_idat(picture_arr[IDAT_index], picture_arr.width, private_key=(d , n) ,public_key=(e , n), type="lib")
             IDAT = new_IDAT
             IDAT[0] = int(len(IDAT[2])//2) 
             IDAT[3] = update_crc(IDAT[2])
@@ -190,7 +180,8 @@ if __name__ == "__main__":
                             "n": hex(public_key[1]), 
                             "p": hex(p),
                             "q": hex(q),
-                            "padding": number_of_zeros
+                            "removed_hex": removed_hex,
+                            "padding": number_of_zeros,
                             }
 
             with open(sys.argv[1][:-4] + "_rsa_lib_encoded.json", "w") as file_for_keys:
@@ -211,7 +202,7 @@ if __name__ == "__main__":
             IDAT_index = picture_arr.get_chunk_index("IDAT")
             IHDR_index = 0
             
-            new_IDAT = decrypt_idat(picture_arr[IDAT_index], picture_arr.width, (d,n), padding, e, p, q)
+            new_IDAT = decrypt_idat(picture_arr[IDAT_index], picture_arr.width, private_key=(d,n), padding=padding, e=e, p=p, q=q)
             
             picture_arr[IDAT_index] = new_IDAT
 
